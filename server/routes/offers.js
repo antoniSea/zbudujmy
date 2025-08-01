@@ -1,0 +1,258 @@
+const express = require('express');
+const puppeteer = require('puppeteer');
+const fs = require('fs').promises;
+const path = require('path');
+const handlebars = require('handlebars');
+const Project = require('../models/Project');
+const Portfolio = require('../models/Portfolio');
+const { auth } = require('../middleware/auth');
+
+const router = express.Router();
+
+// Helper function to format date
+handlebars.registerHelper('formatDate', function(date) {
+  return new Date(date).toLocaleDateString('pl-PL');
+});
+
+// Helper function to format currency
+handlebars.registerHelper('formatCurrency', function(amount) {
+  return new Intl.NumberFormat('pl-PL', {
+    style: 'currency',
+    currency: 'PLN'
+  }).format(amount);
+});
+
+// Helper function to add numbers
+handlebars.registerHelper('add', function(a, b) {
+  return a + b;
+});
+
+// Generate offer HTML
+router.post('/generate/:projectId', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId)
+      .populate('createdBy', 'firstName lastName email');
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    // Get portfolio items for the offer
+    const portfolio = await Portfolio.find({ isActive: true })
+      .sort({ order: 1 })
+      .limit(2);
+
+    // Read the HTML template
+    const templatePath = path.join(__dirname, '../templates/offer-template.html');
+    const templateContent = await fs.readFile(templatePath, 'utf8');
+
+    // Compile template with Handlebars
+    const template = handlebars.compile(templateContent);
+    
+    // Configure Handlebars to allow prototype properties
+    handlebars.allowProtoPropertiesByDefault = true;
+    
+    // Create template with runtime options
+    const templateWithOptions = handlebars.compile(templateContent, {
+      allowProtoPropertiesByDefault: true
+    });
+
+    // Prepare data for template
+    const templateData = {
+      // Project details
+      projectName: project.name,
+      clientName: project.clientName,
+      clientContact: project.clientContact,
+      clientEmail: project.clientEmail,
+      clientPhone: project.clientPhone,
+      description: project.description,
+      mainBenefit: project.mainBenefit,
+      // Offer details
+      offerDate: new Date().toLocaleDateString('pl-PL'),
+      offerNumber: project.offerNumber || 'SS/2024/05/01',
+      // Project manager - zawsze Jakub Czajka
+      projectManager: {
+        name: "Jakub Czajka",
+        position: "Fullstack Developer / UX/UI Designer",
+        email: "jakub.czajka@softsynergy.pl",
+        phone: "+48 123 456 789",
+        avatar: null,
+        description: "Nazywam się Jakub Czajka i specjalizuję się w tworzeniu nowoczesnych aplikacji webowych, stron internetowych oraz sklepów online. Łączę umiejętności programistyczne z projektowaniem UX/UI, dzięki czemu tworzę rozwiązania dopasowane do potrzeb użytkowników i biznesu. Oferuję projektowanie i wdrażanie stron (landing page, wizytówki, portfolio), sklepy e-commerce, projekty graficzne w Figma, optymalizację i modernizację istniejących stron. Pracuję z technologiami takimi jak HTML, CSS, JavaScript, React, PHP, Laravel, WordPress, Vue, Nuxt, Inertia i Figma. Zapewniam terminowość, estetykę i indywidualne podejście do każdego zlecenia."
+      },
+      // Modules
+      modules: project.modules && project.modules.length > 0 ? 
+        project.modules.map(module => ({
+          name: module.name,
+          description: module.description,
+          color: module.color || 'blue'
+        })) : 
+        [{ name: 'Moduł przykładowy', description: 'Opis przykładowego modułu', color: 'blue' }],
+      // Timeline
+      timeline: project.timeline,
+      // Pricing
+      pricing: project.pricing,
+      // Portfolio items
+      portfolio: portfolio,
+      // Company details
+      companyEmail: 'kontakt@softsynergy.pl',
+      companyPhone: '+48 123 456 789',
+      companyNIP: '123-456-78-90'
+    };
+
+    console.log('DEBUG MODULES:', JSON.stringify(templateData.modules, null, 2));
+
+    // Generate HTML
+    const html = templateWithOptions(templateData);
+
+    // Create generated-offers directory if it doesn't exist
+    const outputDir = path.join(__dirname, '../generated-offers');
+    await fs.mkdir(outputDir, { recursive: true });
+
+    // Save HTML file
+    const fileName = `offer-${project._id}-${Date.now()}.html`;
+    const filePath = path.join(outputDir, fileName);
+    await fs.writeFile(filePath, html);
+
+    // Generate PDF using Puppeteer
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process'
+      ]
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '20mm',
+        bottom: '20mm',
+        left: '20mm'
+      }
+    });
+
+    await browser.close();
+
+    // Save PDF file
+    const pdfFileName = `offer-${project._id}-${Date.now()}.pdf`;
+    const pdfPath = path.join(outputDir, pdfFileName);
+    await fs.writeFile(pdfPath, pdfBuffer);
+
+    // Update project with generated offer URL
+    project.generatedOfferUrl = `/generated-offers/${fileName}`;
+    await project.save();
+
+    res.json({
+      message: 'Oferta została wygenerowana pomyślnie',
+      htmlUrl: `/generated-offers/${fileName}`,
+      pdfUrl: `/generated-offers/${pdfFileName}`,
+      project: project
+    });
+
+  } catch (error) {
+    console.error('Generate offer error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas generowania oferty' });
+  }
+});
+
+// Get offer preview (HTML)
+router.get('/preview/:projectId', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId)
+      .populate('createdBy', 'firstName lastName email');
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    // Get portfolio items
+    const portfolio = await Portfolio.find({ isActive: true })
+      .sort({ order: 1 })
+      .limit(2);
+
+    // Read template
+    const templatePath = path.join(__dirname, '../templates/offer-template.html');
+    const templateContent = await fs.readFile(templatePath, 'utf8');
+    const template = handlebars.compile(templateContent);
+
+    // Prepare data
+    const templateData = {
+      projectName: project.name,
+      clientName: project.clientName,
+      clientContact: project.clientContact,
+      clientEmail: project.clientEmail,
+      clientPhone: project.clientPhone,
+      description: project.description,
+      mainBenefit: project.mainBenefit,
+      offerDate: new Date().toLocaleDateString('pl-PL'),
+      offerNumber: project.offerNumber || 'SS/2024/05/01',
+      projectManager: project.projectManager,
+      modules: project.modules,
+      timeline: project.timeline,
+      pricing: project.pricing,
+      portfolio: portfolio,
+      companyEmail: 'kontakt@softsynergy.pl',
+      companyPhone: '+48 123 456 789',
+      companyNIP: '123-456-78-90'
+    };
+
+    const html = template(templateData);
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+
+  } catch (error) {
+    console.error('Preview offer error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas generowania podglądu' });
+  }
+});
+
+// Download PDF offer
+router.get('/download/:projectId/pdf', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    if (!project.generatedOfferUrl) {
+      return res.status(404).json({ message: 'Oferta nie została jeszcze wygenerowana' });
+    }
+
+    // Extract PDF filename from HTML filename
+    const htmlFileName = project.generatedOfferUrl.split('/').pop();
+    const pdfFileName = htmlFileName.replace('.html', '.pdf');
+    const pdfPath = path.join(__dirname, '../generated-offers', pdfFileName);
+
+    // Check if PDF exists
+    try {
+      await fs.access(pdfPath);
+    } catch (error) {
+      return res.status(404).json({ message: 'Plik PDF nie został znaleziony' });
+    }
+
+    // Send PDF file
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="oferta-${project.name}.pdf"`);
+    
+    const pdfBuffer = await fs.readFile(pdfPath);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Download PDF error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas pobierania PDF' });
+  }
+});
+
+module.exports = router; 
