@@ -74,41 +74,51 @@ install_nodejs() {
     fi
 }
 
-# Instalacja MongoDB
-install_mongodb() {
-    log_info "Sprawdzam czy MongoDB jest zainstalowany..."
+# Sprawdź połączenie z zewnętrzną bazą MongoDB
+check_mongodb_connection() {
+    log_info "Sprawdzam połączenie z zewnętrzną bazą MongoDB..."
     
-    if ! command -v mongod &> /dev/null; then
-        log_info "Instaluję MongoDB..."
-        
-        # Dodaj MongoDB GPG key
-        wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
-        
-        # Dodaj MongoDB repository
-        echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-        
-        # Aktualizuj pakiety
-        sudo apt-get update
-        
-        # Instaluj MongoDB
-        sudo apt-get install -y mongodb-org
-        
-        # Uruchom MongoDB
-        sudo systemctl start mongod
-        sudo systemctl enable mongod
-        
-        log_success "MongoDB zainstalowany i uruchomiony"
-    else
-        log_success "MongoDB już zainstalowany"
-        
-        # Sprawdź czy MongoDB działa
-        if sudo systemctl is-active --quiet mongod; then
-            log_success "MongoDB jest uruchomiony"
+    # Sprawdź czy zmienna MONGODB_URI jest ustawiona
+    if [ -f .env ]; then
+        MONGODB_URI=$(grep MONGODB_URI .env | cut -d'=' -f2)
+        if [ -n "$MONGODB_URI" ]; then
+            log_info "Znaleziono MONGODB_URI w pliku .env"
+            
+            # Sprawdź połączenie przez Node.js
+            node -e "
+            const mongoose = require('mongoose');
+            require('dotenv').config();
+            
+            mongoose.connect(process.env.MONGODB_URI, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 5000
+            })
+            .then(() => {
+                console.log('✅ Połączenie z zewnętrzną bazą MongoDB udane');
+                process.exit(0);
+            })
+            .catch((err) => {
+                console.log('❌ Błąd połączenia z bazą MongoDB:', err.message);
+                console.log('Sprawdź czy MONGODB_URI jest poprawny w pliku .env');
+                process.exit(1);
+            });
+            " 2>/dev/null
+            
+            if [ $? -eq 0 ]; then
+                log_success "Połączenie z zewnętrzną bazą MongoDB udane"
+            else
+                log_error "Nie można połączyć się z zewnętrzną bazą MongoDB"
+                log_warning "Sprawdź czy MONGODB_URI w pliku .env jest poprawny"
+                log_warning "Przykład: MONGODB_URI=mongodb://username:password@host:port/database"
+            fi
         else
-            log_info "Uruchamiam MongoDB..."
-            sudo systemctl start mongod
-            sudo systemctl enable mongod
+            log_warning "MONGODB_URI nie jest ustawiony w pliku .env"
+            log_info "Dodaj MONGODB_URI do pliku .env przed uruchomieniem aplikacji"
         fi
+    else
+        log_warning "Plik .env nie istnieje"
+        log_info "Utworzę plik .env z przykładową konfiguracją"
     fi
 }
 
@@ -175,9 +185,24 @@ setup_environment() {
         # Ustaw tryb produkcyjny
         sed -i "s/NODE_ENV=development/NODE_ENV=production/" .env
         
-        log_warning "Plik .env został utworzony. Sprawdź i dostosuj konfigurację przed uruchomieniem."
+        log_warning "Plik .env został utworzony."
+        log_warning "WAŻNE: Musisz skonfigurować MONGODB_URI dla zewnętrznej bazy danych!"
+        log_info "Przykłady MONGODB_URI:"
+        log_info "  - MongoDB Atlas: mongodb+srv://username:password@cluster.mongodb.net/ofertownik"
+        log_info "  - Zewnętrzny serwer: mongodb://username:password@your-server.com:27017/ofertownik"
+        log_info "  - Lokalna baza: mongodb://localhost:27017/ofertownik"
+        echo ""
+        log_warning "Edytuj plik .env i ustaw poprawny MONGODB_URI przed uruchomieniem aplikacji!"
+        echo ""
     else
         log_success "Plik .env już istnieje"
+        
+        # Sprawdź czy MONGODB_URI jest ustawiony
+        MONGODB_URI=$(grep MONGODB_URI .env | cut -d'=' -f2)
+        if [ -z "$MONGODB_URI" ] || [ "$MONGODB_URI" = "mongodb://localhost:27017/ofertownik" ]; then
+            log_warning "MONGODB_URI nie jest skonfigurowany lub używa domyślnej wartości!"
+            log_info "Edytuj plik .env i ustaw poprawny MONGODB_URI dla zewnętrznej bazy danych."
+        fi
     fi
 }
 
@@ -267,11 +292,39 @@ check_status() {
     echo ""
     echo "=== STATUS USŁUG ==="
     
-    # MongoDB
-    if sudo systemctl is-active --quiet mongod; then
-        echo -e "${GREEN}✓ MongoDB: uruchomiony${NC}"
+    # Sprawdź połączenie z zewnętrzną bazą MongoDB
+    if [ -f .env ]; then
+        MONGODB_URI=$(grep MONGODB_URI .env | cut -d'=' -f2)
+        if [ -n "$MONGODB_URI" ]; then
+            node -e "
+            const mongoose = require('mongoose');
+            require('dotenv').config();
+            
+            mongoose.connect(process.env.MONGODB_URI, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 3000
+            })
+            .then(() => {
+                console.log('✓ Zewnętrzna baza MongoDB: dostępna');
+                process.exit(0);
+            })
+            .catch(() => {
+                console.log('✗ Zewnętrzna baza MongoDB: niedostępna');
+                process.exit(1);
+            });
+            " 2>/dev/null
+            
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}✓ Zewnętrzna baza MongoDB: dostępna${NC}"
+            else
+                echo -e "${RED}✗ Zewnętrzna baza MongoDB: niedostępna${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠ MONGODB_URI nie ustawiony${NC}"
+        fi
     else
-        echo -e "${RED}✗ MongoDB: zatrzymany${NC}"
+        echo -e "${YELLOW}⚠ Plik .env nie istnieje${NC}"
     fi
     
     # PM2
@@ -307,7 +360,7 @@ main() {
     check_permissions
     check_os
     install_nodejs
-    install_mongodb
+    check_mongodb_connection
     install_pm2
     install_nginx
     install_dependencies

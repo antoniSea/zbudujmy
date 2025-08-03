@@ -54,11 +54,39 @@ check_services_status() {
     echo ""
     echo "=== STATUS USŁUG ==="
     
-    # MongoDB
-    if sudo systemctl is-active --quiet mongod; then
-        echo -e "${GREEN}✓ MongoDB: uruchomiony${NC}"
+    # Sprawdź połączenie z zewnętrzną bazą MongoDB
+    if [ -f .env ]; then
+        MONGODB_URI=$(grep MONGODB_URI .env | cut -d'=' -f2)
+        if [ -n "$MONGODB_URI" ]; then
+            node -e "
+            const mongoose = require('mongoose');
+            require('dotenv').config();
+            
+            mongoose.connect(process.env.MONGODB_URI, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                serverSelectionTimeoutMS: 3000
+            })
+            .then(() => {
+                console.log('✓ Zewnętrzna baza MongoDB: dostępna');
+                process.exit(0);
+            })
+            .catch(() => {
+                console.log('✗ Zewnętrzna baza MongoDB: niedostępna');
+                process.exit(1);
+            });
+            " 2>/dev/null
+            
+            if [ $? -eq 0 ]; then
+                echo -e "${GREEN}✓ Zewnętrzna baza MongoDB: dostępna${NC}"
+            else
+                echo -e "${RED}✗ Zewnętrzna baza MongoDB: niedostępna${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠ MONGODB_URI nie ustawiony${NC}"
+        fi
     else
-        echo -e "${RED}✗ MongoDB: zatrzymany${NC}"
+        echo -e "${YELLOW}⚠ Plik .env nie istnieje${NC}"
     fi
     
     # PM2
@@ -153,7 +181,6 @@ check_resources() {
 stop_all_services() {
     log_info "Zatrzymuję wszystkie usługi..."
     pm2 stop all
-    sudo systemctl stop mongod
     if command -v nginx &> /dev/null; then
         sudo systemctl stop nginx
     fi
@@ -163,7 +190,6 @@ stop_all_services() {
 # Uruchom wszystkie usługi
 start_all_services() {
     log_info "Uruchamiam wszystkie usługi..."
-    sudo systemctl start mongod
     pm2 start ecosystem.config.js --env production
     if command -v nginx &> /dev/null; then
         sudo systemctl start nginx
@@ -173,33 +199,48 @@ start_all_services() {
 
 # Sprawdź połączenie z bazą danych
 check_database() {
-    log_info "Sprawdzam połączenie z bazą danych..."
+    log_info "Sprawdzam połączenie z zewnętrzną bazą danych..."
     
-    # Sprawdź czy MongoDB działa
-    if sudo systemctl is-active --quiet mongod; then
-        log_success "MongoDB jest uruchomiony"
-        
-        # Sprawdź połączenie przez Node.js
-        node -e "
-        const mongoose = require('mongoose');
-        require('dotenv').config();
-        
-        mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        })
-        .then(() => {
-            console.log('✅ Połączenie z bazą danych udane');
-            process.exit(0);
-        })
-        .catch((err) => {
-            console.log('❌ Błąd połączenia z bazą danych:', err.message);
-            process.exit(1);
-        });
-        "
-    else
-        log_error "MongoDB nie jest uruchomiony"
+    # Sprawdź czy plik .env istnieje
+    if [ ! -f .env ]; then
+        log_error "Plik .env nie istnieje"
+        return 1
     fi
+    
+    # Sprawdź czy MONGODB_URI jest ustawiony
+    MONGODB_URI=$(grep MONGODB_URI .env | cut -d'=' -f2)
+    if [ -z "$MONGODB_URI" ]; then
+        log_error "MONGODB_URI nie jest ustawiony w pliku .env"
+        log_info "Dodaj MONGODB_URI do pliku .env"
+        return 1
+    fi
+    
+    log_info "Sprawdzam połączenie z: $MONGODB_URI"
+    
+    # Sprawdź połączenie przez Node.js
+    node -e "
+    const mongoose = require('mongoose');
+    require('dotenv').config();
+    
+    mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 10000
+    })
+    .then(() => {
+        console.log('✅ Połączenie z zewnętrzną bazą danych udane');
+        process.exit(0);
+    })
+    .catch((err) => {
+        console.log('❌ Błąd połączenia z bazą danych:', err.message);
+        console.log('');
+        console.log('Sprawdź:');
+        console.log('1. Czy MONGODB_URI jest poprawny');
+        console.log('2. Czy serwer MongoDB jest dostępny');
+        console.log('3. Czy firewall nie blokuje połączenia');
+        process.exit(1);
+    });
+    "
 }
 
 # Wyświetl konfigurację środowiska

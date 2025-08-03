@@ -33,10 +33,22 @@ git clone <your-repo-url>
 cd ofertownik-soft-synergy
 
 # Nadaj uprawnienia do wykonywania skryptów
-chmod +x deploy.sh manage.sh
+chmod +x deploy.sh manage.sh setup-mongodb.sh
 ```
 
-### 2. Uruchom deployment
+### 2. Konfiguracja zewnętrznej bazy MongoDB
+
+```bash
+# Uruchom skrypt konfiguracji MongoDB
+./setup-mongodb.sh
+```
+
+Wybierz odpowiednią opcję:
+- **MongoDB Atlas** - dla chmurowej bazy danych
+- **Zewnętrzny serwer MongoDB** - dla własnego serwera MongoDB
+- **Lokalna baza MongoDB** - dla lokalnej instalacji
+
+### 3. Uruchom deployment
 
 ```bash
 # Uruchom główny skrypt deploymentu
@@ -44,14 +56,14 @@ chmod +x deploy.sh manage.sh
 ```
 
 Skrypt automatycznie:
-- Zainstaluje Node.js, MongoDB, PM2
+- Zainstaluje Node.js, PM2, nginx
 - Zainstaluje wszystkie zależności
 - Skonfiguruje środowisko
 - Zbuduje aplikację klienta
 - Uruchomi serwer przez PM2
 - Skonfiguruje nginx (opcjonalnie)
 
-### 3. Utwórz administratora
+### 4. Utwórz administratora
 
 ```bash
 # Uruchom skrypt zarządzania
@@ -79,9 +91,12 @@ Kluczowe zmienne:
 ```env
 NODE_ENV=production
 PORT=5001
-MONGODB_URI=mongodb://localhost:27017/ofertownik
+# Zewnętrzna baza MongoDB - skonfiguruj przez setup-mongodb.sh
+MONGODB_URI=mongodb://username:password@your-server.com:27017/ofertownik
 JWT_SECRET=your-generated-secret
 ```
+
+**Ważne**: Użyj skryptu `setup-mongodb.sh` do konfiguracji połączenia z zewnętrzną bazą MongoDB.
 
 ### Konfiguracja nginx
 
@@ -152,20 +167,19 @@ pm2 start ofertownik-server
 pm2 monit
 ```
 
-### Zarządzanie MongoDB
+### Zarządzanie zewnętrzną bazą MongoDB
 
 ```bash
-# Sprawdź status
-sudo systemctl status mongod
+# Sprawdź połączenie z bazą
+./setup-mongodb.sh
+# Wybierz opcję 4 - "Sprawdź połączenie"
 
-# Uruchom ponownie
-sudo systemctl restart mongod
+# Testuj połączenie
+./setup-mongodb.sh
+# Wybierz opcję 5 - "Testuj połączenie"
 
-# Sprawdź logi
-sudo journalctl -u mongod -f
-
-# Połącz się z bazą
-mongosh
+# Sprawdź konfigurację
+cat .env | grep MONGODB_URI
 ```
 
 ## Monitoring i logi
@@ -199,14 +213,17 @@ ps aux | grep node
 
 ## Backup i restore
 
-### Backup bazy danych
+### Backup zewnętrznej bazy danych
 
 ```bash
-# Utwórz backup
-mongodump --db ofertownik --out /backup/$(date +%Y%m%d)
+# Backup przez MongoDB Atlas (jeśli używasz)
+# Użyj narzędzi MongoDB Atlas do backupu
+
+# Backup zewnętrznego serwera MongoDB
+mongodump --uri="mongodb://username:password@your-server.com:27017/ofertownik" --out /backup/$(date +%Y%m%d)
 
 # Przywróć backup
-mongorestore --db ofertownik /backup/20231201/ofertownik/
+mongorestore --uri="mongodb://username:password@your-server.com:27017/ofertownik" /backup/20231201/ofertownik/
 ```
 
 ### Backup aplikacji
@@ -233,17 +250,19 @@ pm2 logs ofertownik-server
 # Wybierz opcję 9
 ```
 
-### MongoDB nie łączy się
+### Zewnętrzna baza MongoDB nie łączy się
 
 ```bash
-# Sprawdź status MongoDB
-sudo systemctl status mongod
+# Sprawdź połączenie z bazą
+./setup-mongodb.sh
+# Wybierz opcję 4 - "Sprawdź połączenie"
 
-# Sprawdź logi
-sudo journalctl -u mongod -f
+# Sprawdź konfigurację MONGODB_URI
+cat .env | grep MONGODB_URI
 
-# Uruchom ponownie
-sudo systemctl restart mongod
+# Testuj połączenie
+./setup-mongodb.sh
+# Wybierz opcję 5 - "Testuj połączenie"
 ```
 
 ### nginx nie działa
@@ -354,6 +373,14 @@ pm2 monit
 # Sprawdź wersje
 node --version
 npm --version
-mongod --version
 pm2 --version
-``` 
+
+# Konfiguracja MongoDB
+./setup-mongodb.sh
+```
+
+## Skrypty deploymentu
+
+- **`deploy.sh`** - Główny skrypt deploymentu
+- **`manage.sh`** - Zarządzanie aplikacją po deployment
+- **`setup-mongodb.sh`** - Konfiguracja zewnętrznej bazy MongoDB 

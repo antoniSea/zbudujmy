@@ -21,17 +21,4 @@ module.exports = {
       time: true
     }
   ],
-
-  deploy: {
-    production: {
-      user: 'ubuntu',
-      host: 'your-server-ip',
-      ref: 'origin/main',
-      repo: 'git@github.com:your-username/ofertownik-soft-synergy.git',
-      path: '/var/www/ofertownik',
-      'pre-deploy-local': '',
-      'post-deploy': 'npm install && cd client && npm install && npm run build && pm2 reload ecosystem.config.js --env production',
-      'pre-setup': ''
-    }
-  }
 }; 
