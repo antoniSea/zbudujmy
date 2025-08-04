@@ -30,7 +30,7 @@ app.use(helmet({
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['http://ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com'] 
-    : ['http://localhost:3000'],
+    : ['http://localhost:3000', 'http://ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com'],
   credentials: true
 }));
 
