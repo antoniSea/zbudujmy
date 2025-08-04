@@ -46,7 +46,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/generated-offers', express.static(path.join(__dirname, 'generated-offers')));
 
 // Routes
@@ -58,6 +58,21 @@ app.use('/api/offers', offerRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Test uploads directory
+app.get('/api/test-uploads', (req, res) => {
+  const fs = require('fs');
+  const uploadsPath = path.join(__dirname, '../uploads');
+  const portfolioPath = path.join(uploadsPath, 'portfolio');
+  
+  res.json({
+    uploadsPath,
+    uploadsExists: fs.existsSync(uploadsPath),
+    portfolioExists: fs.existsSync(portfolioPath),
+    uploadsFiles: fs.existsSync(uploadsPath) ? fs.readdirSync(uploadsPath) : [],
+    portfolioFiles: fs.existsSync(portfolioPath) ? fs.readdirSync(portfolioPath) : []
+  });
 });
 
 // Error handling middleware
