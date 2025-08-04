@@ -113,34 +113,45 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     const filePath = path.join(outputDir, fileName);
     await fs.writeFile(filePath, html);
 
-    // Generate PDF using jsPDF (no browser required)
-    const doc = new jsPDF();
+    // Try to generate PDF, but don't fail if it doesn't work
+    let pdfFileName = null;
+    let pdfUrl = null;
     
-    // Convert HTML to text for simple PDF generation
-    // Note: This is a simplified approach - for complex HTML you might want to use html2canvas
-    const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    
-    // Split text into lines that fit the page
-    const splitText = doc.splitTextToSize(textContent, 180);
-    
-    doc.setFontSize(12);
-    doc.text(splitText, 15, 20);
-    
-    const pdfBuffer = doc.output('arraybuffer');
+    try {
+      const { jsPDF } = require('jspdf');
+      const doc = new jsPDF();
+      
+      // Convert HTML to text for simple PDF generation
+      const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      // Split text into lines that fit the page
+      const splitText = doc.splitTextToSize(textContent, 180);
+      
+      doc.setFontSize(12);
+      doc.text(splitText, 15, 20);
+      
+      const pdfBuffer = doc.output('arraybuffer');
 
-    // Save PDF file
-    const pdfFileName = `offer-${project._id}-${Date.now()}.pdf`;
-    const pdfPath = path.join(outputDir, pdfFileName);
-    await fs.writeFile(pdfPath, pdfBuffer);
+      // Save PDF file
+      pdfFileName = `offer-${project._id}-${Date.now()}.pdf`;
+      const pdfPath = path.join(outputDir, pdfFileName);
+      await fs.writeFile(pdfPath, pdfBuffer);
+      pdfUrl = `/generated-offers/${pdfFileName}`;
+      
+      console.log('PDF generated successfully');
+    } catch (pdfError) {
+      console.error('PDF generation failed:', pdfError);
+      console.log('Continuing with HTML generation only');
+    }
 
     // Update project with generated offer URL
     project.generatedOfferUrl = `/generated-offers/${fileName}`;
     await project.save();
 
     res.json({
-      message: 'Oferta została wygenerowana pomyślnie',
+      message: pdfUrl ? 'Oferta została wygenerowana pomyślnie' : 'Oferta HTML została wygenerowana pomyślnie (PDF nie udało się wygenerować)',
       htmlUrl: `/generated-offers/${fileName}`,
-      pdfUrl: `/generated-offers/${pdfFileName}`,
+      pdfUrl: pdfUrl,
       project: project
     });
 
@@ -224,7 +235,10 @@ router.get('/download/:projectId/pdf', auth, async (req, res) => {
     try {
       await fs.access(pdfPath);
     } catch (error) {
-      return res.status(404).json({ message: 'Plik PDF nie został znaleziony' });
+      return res.status(404).json({ 
+        message: 'Plik PDF nie został znaleziony. Spróbuj ponownie wygenerować ofertę.',
+        error: 'PDF_NOT_FOUND'
+      });
     }
 
     // Send PDF file
