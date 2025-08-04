@@ -17,7 +17,8 @@ dist/
 out/
 
 # Generated files
-server/generated-offers/
+server/generated-offers/*
+!server/generated-offers/jakub czajka.jpeg
 server/uploads/
 
 # Logs
