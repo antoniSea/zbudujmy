@@ -98,7 +98,19 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       // Pricing
       pricing: project.pricing,
       // Portfolio items
-      portfolio: portfolio,
+      portfolio: portfolio.map(item => ({
+        _id: item._id.toString(),
+        title: item.title,
+        description: item.description,
+        image: item.image,
+        category: item.category,
+        technologies: item.technologies,
+        client: item.client,
+        duration: item.duration,
+        results: item.results,
+        isActive: item.isActive,
+        order: item.order
+      })),
       // Company details
       companyEmail: 'jakub.czajka@soft-synergy.com',
       companyPhone: '+48 793 868 886',
