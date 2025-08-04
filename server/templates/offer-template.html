@@ -184,7 +184,12 @@
                     {{#each portfolio}}
                     <div class="card-3d group">
                         <div class="glass-card overflow-hidden transition-all duration-500 group-hover:shadow-2xl group-hover:shadow-blue-500/20">
-                            <img src="http://oferty.soft-synergy.com{{image}}" alt="{{title}}" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                            <img src="http://oferty.soft-synergy.com{{image}}" alt="{{title}}" class="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'" style="border: 1px solid red;">
+                            <div style="border: 1px solid blue; padding: 10px;">
+                                <p>DEBUG: image = "{{image}}"</p>
+                                <p>DEBUG: title = "{{title}}"</p>
+                                <p>DEBUG: description = "{{description}}"</p>
+                            </div>
                             <div class="p-6">
                                 <h3 class="text-xl font-bold mb-1">{{title}}</h3>
                                 <p class="text-slate-400 text-sm print-text-gray">{{description}}</p>

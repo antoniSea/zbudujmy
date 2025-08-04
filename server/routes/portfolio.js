@@ -12,11 +12,11 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log('Multer destination called');
     console.log('Current working directory:', process.cwd());
-    console.log('Target directory:', 'server/uploads/portfolio/');
+    console.log('Target directory:', 'uploads/portfolio/');
     
     // Ensure directory exists
     const fs = require('fs');
-    const uploadDir = 'server/uploads/portfolio/';
+    const uploadDir = 'uploads/portfolio/';
     
     if (!fs.existsSync(uploadDir)) {
       console.log('Creating directory:', uploadDir);
@@ -52,7 +52,7 @@ const upload = multer({
       cb(new Error('Tylko pliki obrazów są dozwolone!'));
     }
   }
-});
+}).single('image');
 
 // Get all portfolio items
 router.get('/', async (req, res) => {
@@ -101,7 +101,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', [
   auth,
   requireRole(['admin', 'manager']),
-  upload.single('image'),
+  upload,
   body('title').trim().isLength({ min: 3 }),
   body('description').trim().isLength({ min: 10 }),
   body('category').isIn(['web', 'mobile', 'desktop', 'api', 'other'])
@@ -110,6 +110,16 @@ router.post('/', [
   console.log('Files:', req.files);
   console.log('File:', req.file);
   console.log('Body:', req.body);
+  
+  // Handle multer errors
+  if (req.fileValidationError) {
+    return res.status(400).json({ message: req.fileValidationError });
+  }
+  
+  if (req.fileError) {
+    return res.status(400).json({ message: req.fileError });
+  }
+  
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -180,7 +190,7 @@ router.post('/', [
 router.put('/:id', [
   auth,
   requireRole(['admin', 'manager']),
-  upload.single('image'),
+  upload,
   body('title').trim().isLength({ min: 3 }),
   body('description').trim().isLength({ min: 10 }),
   body('category').isIn(['web', 'mobile', 'desktop', 'api', 'other'])
