@@ -41,6 +41,8 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     const portfolio = await Portfolio.find({ isActive: true })
       .sort({ order: 1 })
       .limit(2);
+    
+    console.log('DEBUG PORTFOLIO:', JSON.stringify(portfolio, null, 2));
 
     // Read the HTML template
     const templatePath = path.join(__dirname, '../templates/offer-template.html');

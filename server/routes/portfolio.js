@@ -12,11 +12,11 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log('Multer destination called');
     console.log('Current working directory:', process.cwd());
-    console.log('Target directory:', 'uploads/portfolio/');
+    console.log('Target directory:', 'server/uploads/portfolio/');
     
     // Ensure directory exists
     const fs = require('fs');
-    const uploadDir = 'uploads/portfolio/';
+    const uploadDir = 'server/uploads/portfolio/';
     
     if (!fs.existsSync(uploadDir)) {
       console.log('Creating directory:', uploadDir);

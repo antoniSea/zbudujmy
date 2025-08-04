@@ -79,7 +79,7 @@ const PortfolioForm = () => {
         image: null,
         isActive: portfolio.isActive
       });
-      setImagePreview(portfolio.image);
+      setImagePreview(`http://oferty.soft-synergy.com${portfolio.image}`);
     }
   }, [portfolio]);
 
