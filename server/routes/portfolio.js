@@ -10,11 +10,26 @@ const router = express.Router();
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/portfolio/');
+    console.log('Multer destination called');
+    console.log('Current working directory:', process.cwd());
+    console.log('Target directory:', 'uploads/portfolio/');
+    
+    // Ensure directory exists
+    const fs = require('fs');
+    const uploadDir = 'uploads/portfolio/';
+    
+    if (!fs.existsSync(uploadDir)) {
+      console.log('Creating directory:', uploadDir);
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const filename = file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname);
+    console.log('Generated filename:', filename);
+    cb(null, filename);
   }
 });
 
@@ -24,13 +39,16 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
   fileFilter: (req, file, cb) => {
+    console.log('Multer fileFilter called for:', file.originalname);
     const allowedTypes = /jpeg|jpg|png|webp/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
 
     if (mimetype && extname) {
+      console.log('File accepted:', file.originalname);
       return cb(null, true);
     } else {
+      console.log('File rejected:', file.originalname, 'mimetype:', file.mimetype);
       cb(new Error('Tylko pliki obrazów są dozwolone!'));
     }
   }
@@ -88,6 +106,10 @@ router.post('/', [
   body('description').trim().isLength({ min: 10 }),
   body('category').isIn(['web', 'mobile', 'desktop', 'api', 'other'])
 ], async (req, res) => {
+  console.log('POST /portfolio - Request received');
+  console.log('Files:', req.files);
+  console.log('File:', req.file);
+  console.log('Body:', req.body);
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
