@@ -74,9 +74,9 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       projectManager: {
         name: "Jakub Czajka",
         position: "Fullstack Developer / UX/UI Designer",
-        email: "jakub.czajka@softsynergy.pl",
-        phone: "+48 123 456 789",
-        avatar: null,
+        email: "jakub.czajka@soft-synergy.com",
+        phone: "+48 793 868 886",
+        avatar: "/generated-offers/jakub czajka.jpeg",
         description: "Nazywam się Jakub Czajka i specjalizuję się w tworzeniu nowoczesnych aplikacji webowych, stron internetowych oraz sklepów online. Łączę umiejętności programistyczne z projektowaniem UX/UI, dzięki czemu tworzę rozwiązania dopasowane do potrzeb użytkowników i biznesu. Oferuję projektowanie i wdrażanie stron (landing page, wizytówki, portfolio), sklepy e-commerce, projekty graficzne w Figma, optymalizację i modernizację istniejących stron. Pracuję z technologiami takimi jak HTML, CSS, JavaScript, React, PHP, Laravel, WordPress, Vue, Nuxt, Inertia i Figma. Zapewniam terminowość, estetykę i indywidualne podejście do każdego zlecenia."
       },
       // Modules
@@ -94,8 +94,8 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       // Portfolio items
       portfolio: portfolio,
       // Company details
-      companyEmail: 'kontakt@softsynergy.pl',
-      companyPhone: '+48 123 456 789',
+      companyEmail: 'jakub.czajka@soft-synergy.com',
+      companyPhone: '+48 793 868 886',
       companyNIP: '123-456-78-90'
     };
 
@@ -197,8 +197,8 @@ router.get('/preview/:projectId', auth, async (req, res) => {
       timeline: project.timeline,
       pricing: project.pricing,
       portfolio: portfolio,
-      companyEmail: 'kontakt@softsynergy.pl',
-      companyPhone: '+48 123 456 789',
+      companyEmail: 'jakub.czajka@soft-synergy.com',
+      companyPhone: '+48 793 868 886',
       companyNIP: '123-456-78-90'
     };
 
