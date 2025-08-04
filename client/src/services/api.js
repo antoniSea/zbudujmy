@@ -15,6 +15,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Don't set Content-Type for FormData, let browser handle it
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {
@@ -56,8 +62,16 @@ export const projectsAPI = {
 export const portfolioAPI = {
   getAll: (params) => api.get('/api/portfolio', { params }).then(res => res.data),
   getById: (id) => api.get(`/api/portfolio/${id}`).then(res => res.data),
-  create: (data) => api.post('/api/portfolio', data).then(res => res.data),
-  update: (id, data) => api.put(`/api/portfolio/${id}`, data).then(res => res.data),
+  create: (data) => {
+    // If data is FormData, let browser set the Content-Type header automatically
+    const config = data instanceof FormData ? { headers: {} } : {};
+    return api.post('/api/portfolio', data, config).then(res => res.data);
+  },
+  update: (id, data) => {
+    // If data is FormData, let browser set the Content-Type header automatically
+    const config = data instanceof FormData ? { headers: {} } : {};
+    return api.put(`/api/portfolio/${id}`, data, config).then(res => res.data);
+  },
   delete: (id) => api.delete(`/api/portfolio/${id}`).then(res => res.data),
   updateOrder: (id, order) => api.put(`/api/portfolio/${id}/order`, { order }).then(res => res.data),
   toggleStatus: (id) => api.patch(`/api/portfolio/${id}/toggle`).then(res => res.data),

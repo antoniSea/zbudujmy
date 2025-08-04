@@ -45,6 +45,7 @@ const PortfolioForm = () => {
       navigate('/portfolio');
     },
     onError: (error) => {
+      console.error('Create portfolio error:', error.response?.data);
       toast.error(error.response?.data?.message || 'Błąd podczas tworzenia elementu portfolio');
     }
   });
@@ -59,6 +60,7 @@ const PortfolioForm = () => {
         navigate('/portfolio');
       },
       onError: (error) => {
+        console.error('Update portfolio error:', error.response?.data);
         toast.error(error.response?.data?.message || 'Błąd podczas aktualizacji elementu portfolio');
       }
     }
@@ -70,7 +72,7 @@ const PortfolioForm = () => {
         title: portfolio.title,
         description: portfolio.description,
         category: portfolio.category,
-        technologies: portfolio.technologies || [''],
+        technologies: portfolio.technologies && portfolio.technologies.length > 0 ? portfolio.technologies : [''],
         client: portfolio.client || '',
         duration: portfolio.duration || '',
         results: portfolio.results || '',
@@ -108,7 +110,9 @@ const PortfolioForm = () => {
   const removeTechnology = (index) => {
     setFormData(prev => ({
       ...prev,
-      technologies: prev.technologies.filter((_, i) => i !== index)
+      technologies: prev.technologies.length > 1 
+        ? prev.technologies.filter((_, i) => i !== index)
+        : prev.technologies
     }));
   };
 
@@ -131,16 +135,51 @@ const PortfolioForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Client-side validation
+    if (!formData.title.trim()) {
+      toast.error('Tytuł jest wymagany');
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      toast.error('Opis jest wymagany');
+      return;
+    }
+    
+    if (!formData.image && !isEditing) {
+      toast.error('Zdjęcie jest wymagane');
+      return;
+    }
+    
+    if (!formData.image && isEditing && !imagePreview) {
+      toast.error('Zdjęcie jest wymagane');
+      return;
+    }
+    
+    const filteredTechnologies = formData.technologies.filter(tech => tech.trim() !== '');
+    if (filteredTechnologies.length === 0) {
+      toast.error('Dodaj przynajmniej jedną technologię');
+      return;
+    }
+    
     const submitData = new FormData();
     Object.keys(formData).forEach(key => {
       if (key === 'technologies') {
-        submitData.append(key, JSON.stringify(formData[key].filter(tech => tech.trim())));
+        submitData.append(key, JSON.stringify(filteredTechnologies));
       } else if (key === 'image' && formData[key]) {
         submitData.append(key, formData[key]);
       } else if (key !== 'image') {
         submitData.append(key, formData[key]);
       }
     });
+
+    // Debug: log the data being sent
+    console.log('Form data:', formData);
+    console.log('Filtered technologies:', filteredTechnologies);
+    console.log('Submit data entries:');
+    for (let [key, value] of submitData.entries()) {
+      console.log(key, value);
+    }
 
     if (isEditing) {
       updateMutation.mutate(submitData);

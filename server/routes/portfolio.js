@@ -86,8 +86,7 @@ router.post('/', [
   upload.single('image'),
   body('title').trim().isLength({ min: 3 }),
   body('description').trim().isLength({ min: 10 }),
-  body('category').isIn(['web', 'mobile', 'desktop', 'api', 'other']),
-  body('technologies').isArray({ min: 1 })
+  body('category').isIn(['web', 'mobile', 'desktop', 'api', 'other'])
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -102,8 +101,39 @@ router.post('/', [
       return res.status(400).json({ message: 'Obraz jest wymagany' });
     }
 
+    // Parse technologies from JSON string if needed
+    let technologies = [];
+    console.log('Received technologies:', req.body.technologies);
+    console.log('Type of technologies:', typeof req.body.technologies);
+    
+    if (req.body.technologies) {
+      try {
+        if (typeof req.body.technologies === 'string') {
+          technologies = JSON.parse(req.body.technologies);
+        } else {
+          technologies = req.body.technologies;
+        }
+        console.log('Parsed technologies:', technologies);
+      } catch (error) {
+        console.error('Error parsing technologies:', error);
+        return res.status(400).json({ 
+          message: 'Nieprawidłowy format technologii',
+          errors: [{ type: 'field', value: req.body.technologies, msg: 'Invalid technologies format', path: 'technologies', location: 'body' }]
+        });
+      }
+    }
+
+    // Validate technologies array
+    if (!Array.isArray(technologies) || technologies.length === 0) {
+      return res.status(400).json({ 
+        message: 'Technologie są wymagane',
+        errors: [{ type: 'field', value: req.body.technologies, msg: 'Technologies are required', path: 'technologies', location: 'body' }]
+      });
+    }
+
     const portfolioData = {
       ...req.body,
+      technologies: technologies.filter(tech => tech.trim() !== ''),
       image: `/uploads/portfolio/${req.file.filename}`,
       createdBy: req.user._id
     };
@@ -149,6 +179,29 @@ router.put('/:id', [
     }
 
     const updateData = { ...req.body };
+    
+    // Parse technologies from JSON string if needed
+    if (req.body.technologies) {
+      console.log('Update - Received technologies:', req.body.technologies);
+      console.log('Update - Type of technologies:', typeof req.body.technologies);
+      
+      try {
+        if (typeof req.body.technologies === 'string') {
+          updateData.technologies = JSON.parse(req.body.technologies);
+        } else {
+          updateData.technologies = req.body.technologies;
+        }
+        // Filter out empty technologies
+        updateData.technologies = updateData.technologies.filter(tech => tech.trim() !== '');
+        console.log('Update - Parsed technologies:', updateData.technologies);
+      } catch (error) {
+        console.error('Update - Error parsing technologies:', error);
+        return res.status(400).json({ 
+          message: 'Nieprawidłowy format technologii',
+          errors: [{ type: 'field', value: req.body.technologies, msg: 'Invalid technologies format', path: 'technologies', location: 'body' }]
+        });
+      }
+    }
     
     if (req.file) {
       updateData.image = `/uploads/portfolio/${req.file.filename}`;
