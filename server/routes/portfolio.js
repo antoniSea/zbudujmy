@@ -106,19 +106,26 @@ router.post('/', [
   body('description').trim().isLength({ min: 10 }),
   body('category').isIn(['web', 'mobile', 'desktop', 'api', 'other'])
 ], async (req, res) => {
-  console.log('POST /portfolio - Request received');
-  console.log('Files:', req.files);
-  console.log('File:', req.file);
-  console.log('Body:', req.body);
-  
-  // Handle multer errors
-  if (req.fileValidationError) {
-    return res.status(400).json({ message: req.fileValidationError });
-  }
-  
-  if (req.fileError) {
-    return res.status(400).json({ message: req.fileError });
-  }
+      console.log('POST /portfolio - Request received');
+    console.log('Files:', req.files);
+    console.log('File:', req.file);
+    console.log('Body:', req.body);
+    
+    // Handle multer errors
+    if (req.fileValidationError) {
+      return res.status(400).json({ message: req.fileValidationError });
+    }
+    
+    if (req.fileError) {
+      return res.status(400).json({ message: req.fileError });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'Obraz jest wymagany' });
+    }
+    
+    console.log('File saved successfully:', req.file.filename);
+    console.log('File path:', req.file.path);
   
   try {
     const errors = validationResult(req);

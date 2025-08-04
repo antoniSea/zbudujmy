@@ -42,11 +42,7 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       .sort({ order: 1 })
       .limit(2);
     
-    console.log('DEBUG PORTFOLIO:', JSON.stringify(portfolio, null, 2));
-    console.log('DEBUG PORTFOLIO LENGTH:', portfolio.length);
-    if (portfolio.length > 0) {
-      console.log('DEBUG FIRST PORTFOLIO ITEM:', JSON.stringify(portfolio[0], null, 2));
-    }
+
 
     // Read the HTML template
     const templatePath = path.join(__dirname, '../templates/offer-template.html');
@@ -117,8 +113,7 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       companyNIP: '123-456-78-90'
     };
 
-    console.log('DEBUG MODULES:', JSON.stringify(templateData.modules, null, 2));
-    console.log('DEBUG TEMPLATE DATA PORTFOLIO:', JSON.stringify(templateData.portfolio, null, 2));
+
 
     // Generate HTML
     const html = templateWithOptions(templateData);
