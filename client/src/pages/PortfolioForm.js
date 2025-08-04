@@ -151,7 +151,8 @@ const PortfolioForm = () => {
       return;
     }
     
-    if (!formData.image && isEditing && !imagePreview) {
+    // For editing, image is not required if there's already an image
+    if (!formData.image && !isEditing) {
       toast.error('Zdjęcie jest wymagane');
       return;
     }
@@ -172,6 +173,16 @@ const PortfolioForm = () => {
         submitData.append(key, formData[key]);
       }
     });
+    
+    // If editing and no new image selected, don't send image field
+    if (isEditing && !formData.image) {
+      submitData.delete('image');
+    }
+    
+    // If editing and no new image, but there's an existing image, don't send image field
+    if (isEditing && !formData.image && imagePreview) {
+      submitData.delete('image');
+    }
 
     // Debug: log the data being sent
     console.log('Form data:', formData);
@@ -353,7 +364,9 @@ const PortfolioForm = () => {
           <h2 className="text-lg font-medium text-gray-900 mb-4">Zdjęcie projektu</h2>
           <div className="space-y-4">
             <div>
-              <label className="form-label">Wybierz zdjęcie *</label>
+              <label className="form-label">
+                Wybierz zdjęcie {!isEditing && '*'}
+              </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
                 <div className="space-y-1 text-center">
                   <Image className="mx-auto h-12 w-12 text-gray-400" />
@@ -375,7 +388,12 @@ const PortfolioForm = () => {
                     </label>
                     <p className="pl-1">lub przeciągnij i upuść</p>
                   </div>
-                  <p className="text-xs text-gray-500">PNG, JPG, WEBP do 5MB</p>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG, WEBP do 5MB
+                    {isEditing && imagePreview && (
+                      <span className="block text-green-600">Obecne zdjęcie zostanie zachowane</span>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
