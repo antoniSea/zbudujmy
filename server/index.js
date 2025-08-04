@@ -29,7 +29,7 @@ app.use(helmet({
 }));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
+    ? ['http://ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com'] 
     : ['http://localhost:3000'],
   credentials: true
 }));
@@ -83,8 +83,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.log('✅ Połączono z bazą danych MongoDB');
   app.listen(PORT, () => {
     console.log(`🚀 Serwer działa na porcie ${PORT}`);
-    console.log(`📱 Frontend: http://localhost:3000`);
-    console.log(`🔧 API: http://localhost:${PORT}/api`);
+    console.log(`📱 Frontend: http://ofertownik.soft-synergy.com`);
+    console.log(`🔧 API: http://oferty.soft-synergy.com/api`);
   });
 })
 .catch((err) => {

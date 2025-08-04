@@ -1,5 +1,5 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const jsPDF = require('jspdf');
 const fs = require('fs').promises;
 const path = require('path');
 const handlebars = require('handlebars');
@@ -113,35 +113,20 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     const filePath = path.join(outputDir, fileName);
     await fs.writeFile(filePath, html);
 
-    // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process'
-      ]
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // Generate PDF using jsPDF (no browser required)
+    const doc = new jsPDF();
     
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '20mm',
-        bottom: '20mm',
-        left: '20mm'
-      }
-    });
-
-    await browser.close();
+    // Convert HTML to text for simple PDF generation
+    // Note: This is a simplified approach - for complex HTML you might want to use html2canvas
+    const textContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // Split text into lines that fit the page
+    const splitText = doc.splitTextToSize(textContent, 180);
+    
+    doc.setFontSize(12);
+    doc.text(splitText, 15, 20);
+    
+    const pdfBuffer = doc.output('arraybuffer');
 
     // Save PDF file
     const pdfFileName = `offer-${project._id}-${Date.now()}.pdf`;

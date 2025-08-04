@@ -16,7 +16,7 @@ Aplikacja do zarządzania ofertami projektowymi dla firmy Soft Synergy.
 - **Node.js** z Express.js
 - **MongoDB** z Mongoose
 - **JWT** dla autentykacji
-- **Puppeteer** do generowania PDF
+- **jsPDF** do generowania PDF (bez przeglądarki)
 - **Handlebars** do templatów HTML
 - **Multer** do uploadu plików
 
@@ -129,8 +129,8 @@ JWT_SECRET=your-secret-key
 ```
 
 ### Porty
-- **Frontend:** http://localhost:3000
-- **Backend:** http://localhost:5001
+- **Frontend:** http://ofertownik.soft-synergy.com
+- **Backend:** http://oferty.soft-synergy.com
 
 ## 📝 Licencja
 

@@ -300,7 +300,7 @@ const ProjectDetail = () => {
               {project.generatedOfferUrl && (
                 <div className="pt-3">
                   <a
-                    href={`http://localhost:5001${project.generatedOfferUrl}`}
+                    href={`http://oferty.soft-synergy.com${project.generatedOfferUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-primary w-full flex items-center justify-center"

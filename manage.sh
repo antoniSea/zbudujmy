@@ -108,8 +108,8 @@ check_services_status() {
     
     echo ""
     echo "=== DOSTĘPNE ADRESY ==="
-    echo "Frontend: http://$(hostname -I | awk '{print $1}')"
-    echo "API: http://$(hostname -I | awk '{print $1}'):5001/api"
+    echo "Frontend: http://ofertownik.soft-synergy.com"
+echo "API: http://oferty.soft-synergy.com/api"
     echo ""
 }
 

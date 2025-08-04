@@ -190,7 +190,7 @@ const Projects = () => {
               <div className="flex items-center space-x-2 ml-4">
                 {project.generatedOfferUrl ? (
                   <a
-                    href={`http://localhost:5001${project.generatedOfferUrl}`}
+                    href={`http://oferty.soft-synergy.com${project.generatedOfferUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 text-gray-400 hover:text-green-600"
