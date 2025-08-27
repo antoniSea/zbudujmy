@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
@@ -73,6 +73,42 @@ app.get('/api/test-uploads', (req, res) => {
     uploadsFiles: fs.existsSync(uploadsPath) ? fs.readdirSync(uploadsPath) : [],
     portfolioFiles: fs.existsSync(portfolioPath) ? fs.readdirSync(portfolioPath) : []
   });
+});
+
+// URL rewriting for offers - make them look professional
+app.get('/oferta-finalna/:projectName', async (req, res) => {
+  try {
+    const { projectName } = req.params;
+    
+    // Find project by name (case insensitive)
+    const Project = require('./models/Project');
+    const project = await Project.findOne({
+      name: { $regex: new RegExp(projectName.replace(/-/g, ' '), 'i') }
+    });
+    
+    if (!project || !project.generatedOfferUrl) {
+      return res.status(404).json({ message: 'Oferta nie została znaleziona' });
+    }
+    
+    // Extract the HTML file path from generatedOfferUrl
+    const htmlFileName = project.generatedOfferUrl.split('/').pop();
+    const htmlPath = path.join(__dirname, 'generated-offers', htmlFileName);
+    
+    // Check if HTML file exists
+    const fs = require('fs');
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).json({ message: 'Plik oferty nie został znaleziony' });
+    }
+    
+    // Read and serve the HTML file
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+    res.setHeader('Content-Type', 'text/html');
+    res.send(htmlContent);
+    
+  } catch (error) {
+    console.error('Offer redirect error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas ładowania oferty' });
+  }
 });
 
 // Error handling middleware

@@ -41,8 +41,6 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     const portfolio = await Portfolio.find({ isActive: true })
       .sort({ order: 1 })
       .limit(2);
-    
-
 
     // Read the HTML template
     const templatePath = path.join(__dirname, '../templates/offer-template.html');
@@ -113,8 +111,6 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       companyNIP: '123-456-78-90'
     };
 
-
-
     // Generate HTML
     const html = templateWithOptions(templateData);
 
@@ -165,6 +161,7 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     res.json({
       message: pdfUrl ? 'Oferta została wygenerowana pomyślnie' : 'Oferta HTML została wygenerowana pomyślnie (PDF nie udało się wygenerować)',
       htmlUrl: `/generated-offers/${fileName}`,
+      professionalUrl: `/oferta-finalna/${project.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`,
       pdfUrl: pdfUrl,
       project: project
     });
@@ -268,4 +265,33 @@ router.get('/download/:projectId/pdf', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+// Generate professional offer URL
+router.get('/professional-url/:projectId', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+    
+    // Generate slug from project name
+    const slug = project.name.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
+    
+    const professionalUrl = `http://oferty.soft-synergy.com/oferta-finalna/${slug}`;
+    
+    res.json({
+      professionalUrl,
+      slug,
+      projectName: project.name,
+      message: 'Profesjonalny link został wygenerowany'
+    });
+    
+  } catch (error) {
+    console.error('Generate professional URL error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas generowania profesjonalnego linku' });
+  }
+});
+
+module.exports = router;
