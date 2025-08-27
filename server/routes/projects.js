@@ -49,7 +49,8 @@ router.get('/', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .populate('notes.author', 'firstName lastName email');
     
     if (!project) {
       return res.status(404).json({ message: 'Projekt nie został znaleziony' });
@@ -153,6 +154,46 @@ router.put('/:id', [
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({ message: 'Błąd serwera podczas aktualizacji projektu' });
+  }
+});
+
+// Append a note to project
+router.post('/:id/notes', [
+  auth,
+  body('text').trim().isLength({ min: 1 })
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Nieprawidłowa treść notatki',
+        errors: errors.array() 
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    // Only creator or admin can add notes for now
+    if (project.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Brak uprawnień do dodawania notatek' });
+    }
+
+    const note = { text: req.body.text, author: req.user._id, createdAt: new Date() };
+    project.notes = project.notes || [];
+    project.notes.unshift(note);
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate('createdBy', 'firstName lastName email')
+      .populate('notes.author', 'firstName lastName email');
+
+    res.status(201).json({ message: 'Notatka dodana', project: populated });
+  } catch (error) {
+    console.error('Add note error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas dodawania notatki' });
   }
 });
 

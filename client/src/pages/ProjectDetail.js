@@ -161,10 +161,20 @@ const ProjectDetail = () => {
                 <p className="mt-1 text-sm text-gray-900">{project.mainBenefit}</p>
               </div>
               
-              {project.notes && (
+              {Array.isArray(project.notes) && project.notes.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Notatki</h3>
-                  <p className="mt-1 text-sm text-gray-900">{project.notes}</p>
+                  <ul className="mt-2 space-y-3">
+                    {project.notes.map((n, idx) => (
+                      <li key={idx} className="border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-gray-500">{new Date(n.createdAt).toLocaleString('pl-PL')}</span>
+                          <span className="text-xs text-gray-600">{n.author?.firstName || ''} {n.author?.lastName || ''}</span>
+                        </div>
+                        <p className="text-sm text-gray-900 whitespace-pre-wrap">{n.text}</p>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>

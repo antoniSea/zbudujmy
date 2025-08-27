@@ -50,7 +50,7 @@ const ProjectForm = () => {
       description: 'Z ponad 8-letnim doświadczeniem w prowadzeniu złożonych projektów IT, wierzę w transparentną komunikację i partnerskie relacje. Moim zadaniem jest nie tylko nadzór nad harmonogramem, ale przede wszystkim zapewnienie, że finalny produkt w 100% odpowiada Państwa wizji i celom biznesowym. Będę Państwa głównym punktem kontaktowym na każdym etapie współpracy.'
     },
     status: 'draft',
-    notes: ''
+    notes: []
   });
 
   const { data: project, isLoading } = useQuery(
@@ -593,7 +593,6 @@ const ProjectForm = () => {
                   onChange={(e) => handlePricingChange('phase1', e.target.value)}
                   className="input-field"
                   min="0"
-                  step="1000"
                 />
               </div>
               
@@ -605,7 +604,6 @@ const ProjectForm = () => {
                   onChange={(e) => handlePricingChange('phase2', e.target.value)}
                   className="input-field"
                   min="0"
-                  step="1000"
                 />
               </div>
               
@@ -617,7 +615,6 @@ const ProjectForm = () => {
                   onChange={(e) => handlePricingChange('phase3', e.target.value)}
                   className="input-field"
                   min="0"
-                  step="1000"
                 />
               </div>
               
@@ -629,7 +626,6 @@ const ProjectForm = () => {
                   onChange={(e) => handlePricingChange('phase4', e.target.value)}
                   className="input-field"
                   min="0"
-                  step="1000"
                 />
               </div>
             </div>
@@ -649,17 +645,9 @@ const ProjectForm = () => {
         </div>
 
         {/* Notes */}
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Notatki</h2>
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={handleChange}
-            rows={3}
-            className="input-field"
-            placeholder="Dodatkowe notatki..."
-          />
-        </div>
+        {isEditing && (
+          <NotesSection projectId={id} />
+        )}
 
         {/* Submit */}
         <div className="flex justify-end space-x-4">
@@ -685,3 +673,68 @@ const ProjectForm = () => {
 };
 
 export default ProjectForm; 
+
+// Notes section displayed only in edit mode
+const NotesSection = ({ projectId }) => {
+  const queryClient = useQueryClient();
+  const { data: project } = useQuery(['project', projectId], () => projectsAPI.getById(projectId));
+  const [noteText, setNoteText] = useState('');
+
+  const addNoteMutation = useMutation(({ id, text }) => projectsAPI.addNote(id, text), {
+    onSuccess: () => {
+      setNoteText('');
+      queryClient.invalidateQueries(['project', projectId]);
+      toast.success('Dodano notatkę');
+    },
+    onError: () => toast.error('Nie udało się dodać notatki')
+  });
+
+  const handleAddNote = (e) => {
+    e.preventDefault();
+    if (!noteText.trim()) return;
+    addNoteMutation.mutate({ id: projectId, text: noteText.trim() });
+  };
+
+  return (
+    <div className="card">
+      <h2 className="text-lg font-medium text-gray-900 mb-4">Notatki</h2>
+      <form onSubmit={handleAddNote} className="space-y-3">
+        <textarea
+          value={noteText}
+          onChange={(e) => setNoteText(e.target.value)}
+          rows={3}
+          className="input-field"
+          placeholder="Dodaj nową notatkę..."
+        />
+        <div className="flex justify-end">
+          <button type="submit" className="btn-primary" disabled={addNoteMutation.isLoading}>
+            Dodaj notatkę
+          </button>
+        </div>
+      </form>
+
+      <div className="mt-6">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Historia notatek</h3>
+        {project?.notes?.length ? (
+          <ul className="space-y-3">
+            {project.notes.map((n, idx) => (
+              <li key={idx} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">
+                    {new Date(n.createdAt).toLocaleString('pl-PL')}
+                  </span>
+                  <span className="text-xs text-gray-600">
+                    {n.author?.firstName || ''} {n.author?.lastName || ''}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">{n.text}</p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500">Brak notatek.</p>
+        )}
+      </div>
+    </div>
+  );
+};
