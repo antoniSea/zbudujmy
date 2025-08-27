@@ -159,7 +159,7 @@ const Portfolio = () => {
             <div key={item._id} className="card hover:shadow-md transition-shadow duration-200">
               <div className="aspect-w-16 aspect-h-9 mb-4">
                 <img
-                  src={`http://oferty.soft-synergy.com${item.image}`}
+                  src={`https:///oferty.soft-synergy.com${item.image}`}
                   alt={item.title}
                   className="w-full h-48 object-cover rounded-lg"
                   onError={(e) => {

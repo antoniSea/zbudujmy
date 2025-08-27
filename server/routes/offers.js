@@ -279,7 +279,7 @@ router.get('/professional-url/:projectId', auth, async (req, res) => {
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
     
-    const professionalUrl = `http://oferty.soft-synergy.com/oferta-finalna/${slug}`;
+    const professionalUrl = `https:///oferty.soft-synergy.com/oferta-finalna/${slug}`;
     
     res.json({
       professionalUrl,

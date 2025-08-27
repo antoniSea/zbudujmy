@@ -108,8 +108,8 @@ check_services_status() {
     
     echo ""
     echo "=== DOSTĘPNE ADRESY ==="
-    echo "Frontend: http://ofertownik.soft-synergy.com"
-echo "API: http://oferty.soft-synergy.com/api"
+    echo "Frontend: https:///ofertownik.soft-synergy.com"
+echo "API: https:///oferty.soft-synergy.com/api"
     echo ""
 }
 

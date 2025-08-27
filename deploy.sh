@@ -253,7 +253,7 @@ server {
 
     # API
     location /api {
-        proxy_pass http://oferty.soft-synergy.com;
+        proxy_pass https:///oferty.soft-synergy.com;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -345,8 +345,8 @@ check_status() {
     
     echo ""
     echo "=== DOSTĘPNE ADRESY ==="
-    echo "Frontend: http://ofertownik.soft-synergy.com"
-echo "API: http://oferty.soft-synergy.com/api"
+    echo "Frontend: https:///ofertownik.soft-synergy.com"
+echo "API: https:///oferty.soft-synergy.com/api"
     echo ""
 }
 

@@ -22,15 +22,15 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.tailwindcss.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-      imgSrc: ["'self'", "data:", "https:", "http://oferty.soft-synergy.com", "https://oferty.soft-synergy.com"],
+      imgSrc: ["'self'", "data:", "https:", "https:///oferty.soft-synergy.com", "https://oferty.soft-synergy.com"],
       connectSrc: ["'self'"],
     },
   },
 }));
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['http://ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com', 'http://oferty.soft-synergy.com', 'https://oferty.soft-synergy.com'] 
-    : ['http://localhost:3000', 'http://ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com', 'http://oferty.soft-synergy.com', 'https://oferty.soft-synergy.com'],
+    ? ['https:///ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com', 'https:///oferty.soft-synergy.com', 'https://oferty.soft-synergy.com'] 
+    : ['https:///localhost:3000', 'https:///ofertownik.soft-synergy.com', 'https://ofertownik.soft-synergy.com', 'https:///oferty.soft-synergy.com', 'https://oferty.soft-synergy.com'],
   credentials: true
 }));
 
@@ -134,8 +134,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.log('✅ Połączono z bazą danych MongoDB');
   app.listen(PORT, () => {
     console.log(`🚀 Serwer działa na porcie ${PORT}`);
-    console.log(`📱 Frontend: http://ofertownik.soft-synergy.com`);
-    console.log(`🔧 API: http://oferty.soft-synergy.com/api`);
+    console.log(`📱 Frontend: https:///ofertownik.soft-synergy.com`);
+    console.log(`🔧 API: https:///oferty.soft-synergy.com/api`);
   });
 })
 .catch((err) => {

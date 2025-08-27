@@ -129,8 +129,8 @@ JWT_SECRET=your-secret-key
 ```
 
 ### Porty
-- **Frontend:** http://ofertownik.soft-synergy.com
-- **Backend:** http://oferty.soft-synergy.com
+- **Frontend:** https:///ofertownik.soft-synergy.com
+- **Backend:** https:///oferty.soft-synergy.com
 
 ## 📝 Licencja
 
