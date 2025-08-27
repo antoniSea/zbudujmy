@@ -46,7 +46,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files
-app.use('/uploads/portfolio', express.static(path.join(__dirname, '../uploads/portfolio')));
+app.use('/uploads/portfolio', express.static(path.join(__dirname, 'uploads/portfolio')));
 app.use('/generated-offers', express.static(path.join(__dirname, 'generated-offers')));
 
 // Routes
