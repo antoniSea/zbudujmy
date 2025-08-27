@@ -18,7 +18,7 @@ const projectSchema = new mongoose.Schema({
   },
   clientEmail: {
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
   clientPhone: {

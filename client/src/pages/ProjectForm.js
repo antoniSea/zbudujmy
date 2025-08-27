@@ -7,7 +7,6 @@ import {
   Plus, 
   Trash2,
   FileText,
-  Download,
   Eye
 } from 'lucide-react';
 import { projectsAPI, offersAPI } from '../services/api';
@@ -335,7 +334,6 @@ const ProjectForm = () => {
                 name="clientEmail"
                 value={formData.clientEmail}
                 onChange={handleChange}
-                required
                 className="input-field"
                 placeholder="email@firma.pl"
               />

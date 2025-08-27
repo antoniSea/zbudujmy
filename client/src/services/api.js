@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: process.env.REACT_APP_API_URL || 'https:///oferty.soft-synergy.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
