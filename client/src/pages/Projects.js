@@ -56,6 +56,7 @@ const Projects = () => {
     const statusConfig = {
       draft: { label: 'Szkic', color: 'bg-gray-100 text-gray-800' },
       active: { label: 'Aktywny', color: 'bg-green-100 text-green-800' },
+      accepted: { label: 'Zaakceptowany', color: 'bg-emerald-100 text-emerald-800' },
       completed: { label: 'Zakończony', color: 'bg-blue-100 text-blue-800' },
       cancelled: { label: 'Anulowany', color: 'bg-red-100 text-red-800' },
     };
@@ -129,6 +130,7 @@ const Projects = () => {
               <option value="">Wszystkie</option>
               <option value="draft">Szkic</option>
               <option value="active">Aktywny</option>
+              <option value="accepted">Zaakceptowany</option>
               <option value="completed">Zakończony</option>
               <option value="cancelled">Anulowany</option>
             </select>
@@ -163,6 +165,18 @@ const Projects = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusBadge(project.status)}
+                    {project.priority && (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        project.priority === 'urgent' ? 'bg-red-100 text-red-800' :
+                        project.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                        project.priority === 'low' ? 'bg-gray-100 text-gray-800' :
+                        'bg-sky-100 text-sky-800'
+                      }`}>
+                        {project.priority === 'urgent' ? 'Pilny' :
+                         project.priority === 'high' ? 'Wysoki' :
+                         project.priority === 'low' ? 'Niski' : 'Normalny'}
+                      </span>
+                    )}
                     <span className="text-sm font-medium text-gray-900">
                       {formatCurrency(project.pricing?.total || 0)}
                     </span>

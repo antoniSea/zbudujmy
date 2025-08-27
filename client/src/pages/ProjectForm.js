@@ -703,8 +703,7 @@ const NotesSection = ({ projectId }) => {
     onError: () => toast.error('Nie udało się dodać notatki')
   });
 
-  const handleAddNote = (e) => {
-    e.preventDefault();
+  const handleAddNote = () => {
     if (!noteText.trim()) return;
     addNoteMutation.mutate({ id: projectId, text: noteText.trim() });
   };
@@ -712,7 +711,7 @@ const NotesSection = ({ projectId }) => {
   return (
     <div className="card">
       <h2 className="text-lg font-medium text-gray-900 mb-4">Notatki</h2>
-      <form onSubmit={handleAddNote} className="space-y-3">
+      <div className="space-y-3">
         <textarea
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
@@ -721,11 +720,11 @@ const NotesSection = ({ projectId }) => {
           placeholder="Dodaj nową notatkę..."
         />
         <div className="flex justify-end">
-          <button type="submit" className="btn-primary" disabled={addNoteMutation.isLoading}>
+          <button type="button" onClick={handleAddNote} className="btn-primary" disabled={addNoteMutation.isLoading}>
             Dodaj notatkę
           </button>
         </div>
-      </form>
+      </div>
 
       <div className="mt-6">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Historia notatek</h3>
