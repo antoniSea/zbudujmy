@@ -3,6 +3,7 @@ module.exports = {
     {
       name: 'ofertownik-server',
       script: 'server/index.js',
+      cwd: './',
       instances: 1,
       autorestart: true,
       watch: false,
