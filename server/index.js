@@ -60,6 +60,84 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Simple reminder scheduler for follow-ups (runs every 30 minutes)
+const setupFollowUpReminderScheduler = () => {
+  const nodemailer = require('nodemailer');
+  const Project = require('./models/Project');
+
+  // Configure transport from env or fallback to log-only
+  const transportConfig = process.env.SMTP_HOST ? {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: process.env.SMTP_USER ? {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    } : undefined
+  } : null;
+
+  const transporter = transportConfig ? nodemailer.createTransport(transportConfig) : null;
+
+  const sendEmail = async (subject, html) => {
+    const to = 'jakub.czajka@soft-synergy.com';
+    if (!transporter) {
+      console.log(`[Reminder] Would send email to ${to}: ${subject}`);
+      return;
+    }
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || 'no-reply@soft-synergy.com',
+      to,
+      subject,
+      html
+    });
+  };
+
+  const runCheck = async () => {
+    try {
+      const now = new Date();
+      const projects = await Project.find({
+        status: { $in: ['draft', 'active'] },
+        $or: [
+          { followUps: { $exists: false } },
+          { $where: 'this.followUps.length < 3' }
+        ],
+        nextFollowUpDueAt: { $ne: null, $lte: now }
+      }).limit(50);
+
+      for (const p of projects) {
+        const lastReminder = p.lastFollowUpReminderAt ? new Date(p.lastFollowUpReminderAt) : null;
+        // Avoid spamming: remind once per day at most
+        if (lastReminder && (now.getTime() - lastReminder.getTime()) < (24 * 60 * 60 * 1000)) continue;
+
+        const numSent = Array.isArray(p.followUps) ? p.followUps.length : 0;
+        const subject = `Przypomnienie: Follow-up #${numSent + 1} dla oferty: ${p.name}`;
+        const html = `
+          <p>Należy wysłać follow-up #${numSent + 1} dla oferty:</p>
+          <ul>
+            <li>Projekt: <strong>${p.name}</strong></li>
+            <li>Klient: ${p.clientName}</li>
+            <li>Termin: ${p.nextFollowUpDueAt ? new Date(p.nextFollowUpDueAt).toLocaleString('pl-PL') : '-'}</li>
+          </ul>
+          <p><a href="https:///ofertownik.soft-synergy.com/projects/${p._id}">Przejdź do projektu</a></p>
+        `;
+        try {
+          await sendEmail(subject, html);
+          p.lastFollowUpReminderAt = now;
+          await p.save();
+        } catch (e) {
+          console.error('Reminder email error:', e);
+        }
+      }
+    } catch (e) {
+      console.error('Follow-up reminder check failed:', e);
+    }
+  };
+
+  // initial delay then interval
+  setTimeout(runCheck, 10 * 1000);
+  setInterval(runCheck, 30 * 60 * 1000);
+};
+
 // Test uploads directory
 app.get('/api/test-uploads', (req, res) => {
   const fs = require('fs');
@@ -137,6 +215,13 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.log(`📱 Frontend: https:///ofertownik.soft-synergy.com`);
     console.log(`🔧 API: https:///oferty.soft-synergy.com/api`);
   });
+  // Start reminder scheduler after server is up
+  try {
+    setupFollowUpReminderScheduler();
+    console.log('⏰ Harmonogram przypomnień follow-up uruchomiony');
+  } catch (e) {
+    console.error('Nie udało się uruchomić harmonogramu follow-up:', e);
+  }
 })
 .catch((err) => {
   console.error('❌ Błąd połączenia z bazą danych:', err);

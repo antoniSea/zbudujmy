@@ -130,7 +130,25 @@ const projectSchema = new mongoose.Schema({
     text: { type: String, required: true },
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now }
-  }]
+  }],
+  followUps: [{
+    number: { type: Number, required: true },
+    sentAt: { type: Date, required: true },
+    note: { type: String, default: '' },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+  }],
+  followUpScheduleDays: {
+    type: [Number],
+    default: [4, 4, 7]
+  },
+  nextFollowUpDueAt: {
+    type: Date,
+    default: null
+  },
+  lastFollowUpReminderAt: {
+    type: Date,
+    default: null
+  }
 }, {
   timestamps: true
 });
@@ -162,6 +180,39 @@ projectSchema.pre('save', function(next) {
     this.pricing.total = this.pricing.phase1 + this.pricing.phase2 + this.pricing.phase3 + this.pricing.phase4;
   }
   next();
+});
+
+// Calculate next follow-up due date based on schedule and number of follow-ups already sent
+projectSchema.pre('save', function(next) {
+  try {
+    const maxFollowUps = 3;
+    const numSent = Array.isArray(this.followUps) ? this.followUps.length : 0;
+    if (this.status === 'accepted' || this.status === 'cancelled' || numSent >= maxFollowUps) {
+      this.nextFollowUpDueAt = null;
+      return next();
+    }
+
+    const schedule = Array.isArray(this.followUpScheduleDays) && this.followUpScheduleDays.length
+      ? this.followUpScheduleDays
+      : [4, 4, 7];
+
+    // Cumulative days: e.g., [4,4,7] => [4,8,15]
+    const cumulativeDays = schedule.reduce((acc, days, idx) => {
+      const sum = (acc[idx - 1] || 0) + days;
+      acc.push(sum);
+      return acc;
+    }, []);
+
+    const baseDate = this.createdAt || new Date();
+    const nextIndex = Math.min(numSent, cumulativeDays.length - 1);
+    const daysToAdd = cumulativeDays[nextIndex];
+    const dueDate = new Date(baseDate.getTime());
+    dueDate.setDate(dueDate.getDate() + daysToAdd);
+    this.nextFollowUpDueAt = dueDate;
+    next();
+  } catch (e) {
+    next(e);
+  }
 });
 
 module.exports = mongoose.model('Project', projectSchema); 

@@ -50,7 +50,8 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
       .populate('createdBy', 'firstName lastName email')
-      .populate('notes.author', 'firstName lastName email');
+      .populate('notes.author', 'firstName lastName email')
+      .populate('followUps.author', 'firstName lastName email');
     
     if (!project) {
       return res.status(404).json({ message: 'Projekt nie został znaleziony' });
@@ -154,6 +155,63 @@ router.put('/:id', [
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({ message: 'Błąd serwera podczas aktualizacji projektu' });
+  }
+});
+
+// Create a follow-up (requires note). Automatically sets sequence number.
+router.post('/:id/followups', [
+  auth,
+  body('note').trim().isLength({ min: 1 })
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        message: 'Nieprawidłowa treść notatki follow-up',
+        errors: errors.array() 
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    // Only creator or admin can add follow-ups
+    if (project.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Brak uprawnień do dodawania follow-upów' });
+    }
+
+    if (project.status === 'accepted' || project.status === 'cancelled') {
+      return res.status(400).json({ message: 'Projekt został już zaakceptowany lub anulowany' });
+    }
+
+    const numSent = Array.isArray(project.followUps) ? project.followUps.length : 0;
+    if (numSent >= 3) {
+      return res.status(400).json({ message: 'Wysłano już maksymalną liczbę follow-upów (3)' });
+    }
+
+    const followUp = {
+      number: numSent + 1,
+      sentAt: new Date(),
+      note: req.body.note,
+      author: req.user._id
+    };
+
+    project.followUps = project.followUps || [];
+    project.followUps.push(followUp);
+    // Saving will recalculate nextFollowUpDueAt via pre-save hook
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate('createdBy', 'firstName lastName email')
+      .populate('notes.author', 'firstName lastName email')
+      .populate('followUps.author', 'firstName lastName email');
+
+    res.status(201).json({ message: 'Follow-up zapisany', project: populated });
+  } catch (error) {
+    console.error('Add follow-up error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas dodawania follow-upu' });
   }
 });
 

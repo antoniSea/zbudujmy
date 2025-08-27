@@ -58,6 +58,7 @@ export const projectsAPI = {
   delete: (id) => api.delete(`/api/projects/${id}`).then(res => res.data),
   getStats: () => api.get('/api/projects/stats/overview').then(res => res.data),
   addNote: (id, text) => api.post(`/api/projects/${id}/notes`, { text }).then(res => res.data),
+  addFollowUp: (id, note) => api.post(`/api/projects/${id}/followups`, { note }).then(res => res.data),
 };
 
 export const portfolioAPI = {

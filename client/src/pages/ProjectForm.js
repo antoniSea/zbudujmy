@@ -7,7 +7,8 @@ import {
   Plus, 
   Trash2,
   FileText,
-  Eye
+  Eye,
+  Send
 } from 'lucide-react';
 import { projectsAPI, offersAPI } from '../services/api';
 import toast from 'react-hot-toast';
@@ -693,6 +694,7 @@ const NotesSection = ({ projectId }) => {
   const queryClient = useQueryClient();
   const { data: project } = useQuery(['project', projectId], () => projectsAPI.getById(projectId));
   const [noteText, setNoteText] = useState('');
+  const [followUpNote, setFollowUpNote] = useState('');
 
   const addNoteMutation = useMutation(({ id, text }) => projectsAPI.addNote(id, text), {
     onSuccess: () => {
@@ -701,6 +703,15 @@ const NotesSection = ({ projectId }) => {
       toast.success('Dodano notatkę');
     },
     onError: () => toast.error('Nie udało się dodać notatki')
+  });
+
+  const addFollowUpMutation = useMutation(({ id, note }) => projectsAPI.addFollowUp(id, note), {
+    onSuccess: () => {
+      setFollowUpNote('');
+      queryClient.invalidateQueries(['project', projectId]);
+      toast.success('Zapisano follow-up');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Nie udało się zapisać follow-upu')
   });
 
   const handleAddNote = () => {
@@ -722,6 +733,39 @@ const NotesSection = ({ projectId }) => {
         <div className="flex justify-end">
           <button type="button" onClick={handleAddNote} className="btn-primary" disabled={addNoteMutation.isLoading}>
             Dodaj notatkę
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">Follow-up</h3>
+          <div className="text-xs text-gray-500">
+            {project?.followUps?.length || 0}/3 wysłane
+            {project?.nextFollowUpDueAt && (
+              <span className="ml-2">
+                Następny termin: {new Date(project.nextFollowUpDueAt).toLocaleDateString('pl-PL')}
+              </span>
+            )}
+          </div>
+        </div>
+        <textarea
+          value={followUpNote}
+          onChange={(e) => setFollowUpNote(e.target.value)}
+          rows={3}
+          className="input-field"
+          placeholder="Dodaj notatkę do wysłanego follow-upu (wymagane)"
+        />
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => followUpNote.trim() && addFollowUpMutation.mutate({ id: projectId, note: followUpNote.trim() })}
+            className="btn-secondary flex items-center"
+            disabled={addFollowUpMutation.isLoading || (project?.followUps?.length || 0) >= 3 || project?.status === 'accepted' || project?.status === 'cancelled'}
+            title={(project?.followUps?.length || 0) >= 3 ? 'Wysłano już 3 follow-upy' : ''}
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Zapisz follow-up
           </button>
         </div>
       </div>
@@ -748,6 +792,27 @@ const NotesSection = ({ projectId }) => {
           <p className="text-sm text-gray-500">Brak notatek.</p>
         )}
       </div>
+
+      {project?.followUps?.length ? (
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Historia follow-upów</h3>
+          <ul className="space-y-3">
+            {project.followUps.map((f, idx) => (
+              <li key={idx} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">
+                    #{f.number} • {new Date(f.sentAt).toLocaleString('pl-PL')}
+                  </span>
+                  <span className="text-xs text-gray-600">
+                    {f.author?.firstName || ''} {f.author?.lastName || ''}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-900 whitespace-pre-wrap">{f.note}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 };

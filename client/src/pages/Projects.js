@@ -150,8 +150,11 @@ const Projects = () => {
 
       {/* Projects List */}
       <div className="space-y-4">
-        {data?.projects?.map((project) => (
-          <div key={project._id} className="card hover:shadow-md transition-shadow duration-200">
+        {data?.projects?.map((project) => {
+          const hasPendingFollowUp = project.nextFollowUpDueAt && project.status !== 'accepted' && project.status !== 'cancelled' && (!project.followUps || project.followUps.length < 3);
+          const isOverdue = hasPendingFollowUp && new Date(project.nextFollowUpDueAt) <= new Date();
+          return (
+          <div key={project._id} className={`card hover:shadow-md transition-shadow duration-200 ${isOverdue ? 'ring-2 ring-red-500' : ''}`}>
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center justify-between">
@@ -162,6 +165,11 @@ const Projects = () => {
                     <p className="text-sm text-gray-500">
                       Klient: {project.clientName}
                     </p>
+                    {hasPendingFollowUp && (
+                      <p className={`text-xs mt-1 ${isOverdue ? 'text-red-600 font-semibold' : 'text-gray-500'}`}>
+                        {isOverdue ? 'Termin follow-up minął' : 'Zaplanowany follow-up'}: {new Date(project.nextFollowUpDueAt).toLocaleDateString('pl-PL')}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusBadge(project.status)}
@@ -245,7 +253,7 @@ const Projects = () => {
               </div>
             </div>
           </div>
-        ))}
+        );})}
         
         {data?.projects?.length === 0 && (
           <div className="text-center py-12">
