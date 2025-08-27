@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oferta Projektowa dla {{clientName}} — Soft Synergy</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/generated-offers/logo-removebg-preview.png">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #c9d1d9; overflow-x: hidden; }
         h1, h2, h3, h4, h5, h6 { font-family: 'Sora', sans-serif; color: #f0f6fc; }
@@ -193,6 +195,11 @@
                     </div>
                     {{/each}}
                 </div>
+                <div class="flex justify-center mt-8">
+                    <a href="https://soft-synergy.com/portfolio" target="_blank" rel="noopener" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-1">
+                        Zobacz więcej portfolio
+                    </a>
+                </div>
             </section>
             {{/if}}
             
@@ -253,20 +260,61 @@
         });
         
         function downloadPDF() {
-            // Get current URL and extract project ID
-            const currentUrl = window.location.href;
-            const projectId = currentUrl.split('/').pop().split('-')[1];
+            // Pokaż loading na przycisku
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Generuję PDF...';
+            button.disabled = true;
             
-            // Create download link for PDF
-            const pdfUrl = `https:///oferty.soft-synergy.com/api/offers/download/${projectId}/pdf`;
+            // Konfiguracja dla html2pdf
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `oferta-{{offerNumber}}-{{clientName}}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait' 
+                }
+            };
             
-            // Create temporary link and trigger download
-            const link = document.createElement('a');
-            link.href = pdfUrl;
-            link.download = 'oferta.pdf';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Element do konwersji (cała strona bez przycisków)
+            const element = document.body.cloneNode(true);
+            
+            // Usuń przyciski i elementy no-print z klona
+            const noPrintElements = element.querySelectorAll('.no-print');
+            noPrintElements.forEach(el => el.remove());
+            
+            // Usuń gradient background z klona
+            const gradientBg = element.querySelector('.gradient-bg');
+            if (gradientBg) gradientBg.remove();
+            
+            // Usuń skrypty z klona
+            const scripts = element.querySelectorAll('script');
+            scripts.forEach(el => el.remove());
+            
+            // Generuj PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Przywróć oryginalny tekst przycisku
+                button.textContent = originalText;
+                button.disabled = false;
+            }).catch(err => {
+                console.error('Błąd podczas generowania PDF:', err);
+                button.textContent = 'Błąd - spróbuj ponownie';
+                button.disabled = false;
+                
+                // Przywróć oryginalny tekst po 3 sekundach
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 3000);
+            });
         }
     </script>
 </body>
