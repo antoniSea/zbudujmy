@@ -50,6 +50,7 @@ const ProjectForm = () => {
       description: 'Z ponad 8-letnim doświadczeniem w prowadzeniu złożonych projektów IT, wierzę w transparentną komunikację i partnerskie relacje. Moim zadaniem jest nie tylko nadzór nad harmonogramem, ale przede wszystkim zapewnienie, że finalny produkt w 100% odpowiada Państwa wizji i celom biznesowym. Będę Państwa głównym punktem kontaktowym na każdym etapie współpracy.'
     },
     status: 'draft',
+    priority: 'normal',
     notes: []
   });
 
@@ -275,8 +276,23 @@ const ProjectForm = () => {
               >
                 <option value="draft">Szkic</option>
                 <option value="active">Aktywny</option>
+                <option value="accepted">Zaakceptowany</option>
                 <option value="completed">Zakończony</option>
                 <option value="cancelled">Anulowany</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Priorytet</label>
+              <select
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                className="input-field"
+              >
+                <option value="low">Niski</option>
+                <option value="normal">Normalny</option>
+                <option value="high">Wysoki</option>
+                <option value="urgent">Pilny</option>
               </select>
             </div>
           </div>
@@ -586,7 +602,7 @@ const ProjectForm = () => {
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <label className="form-label">Faza I & II</label>
+                <label className="form-label">Faza I</label>
                 <input
                   type="number"
                   value={formData.pricing.phase1}

@@ -147,8 +147,12 @@
                         </thead>
                         <tbody class="divide-y divide-white/10">
                             <tr class="hover:bg-white/5">
-                                <td class="p-5 font-medium print-text-gray">{{timeline.phase1.name}} & {{timeline.phase2.name}}</td>
+                                <td class="p-5 font-medium print-text-gray">{{timeline.phase1.name}}</td>
                                 <td class="p-5 text-right font-semibold text-slate-300 print-text-black">{{formatCurrency pricing.phase1}}</td>
+                            </tr>
+                            <tr class="hover:bg-white/5">
+                                <td class="p-5 font-medium print-text-gray">{{timeline.phase2.name}}</td>
+                                <td class="p-5 text-right font-semibold text-slate-300 print-text-black">{{formatCurrency pricing.phase2}}</td>
                             </tr>
                             <tr class="hover:bg-white/5">
                                 <td class="p-5 font-medium print-text-gray">{{timeline.phase3.name}}</td>

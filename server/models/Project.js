@@ -104,8 +104,13 @@ const projectSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['draft', 'active', 'completed', 'cancelled'],
+    enum: ['draft', 'active', 'accepted', 'completed', 'cancelled'],
     default: 'draft'
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'normal', 'high', 'urgent'],
+    default: 'normal'
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -73,11 +73,11 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       // Project manager - zawsze Jakub Czajka
       projectManager: {
         name: "Jakub Czajka",
-        position: "Fullstack Developer / UX/UI Designer",
+        position: "Project Manager",
         email: "jakub.czajka@soft-synergy.com",
         phone: "+48 793 868 886",
         avatar: "/generated-offers/jakub czajka.jpeg",
-        description: "Nazywam się Jakub Czajka i specjalizuję się w tworzeniu nowoczesnych aplikacji webowych, stron internetowych oraz sklepów online. Łączę umiejętności programistyczne z projektowaniem UX/UI, dzięki czemu tworzę rozwiązania dopasowane do potrzeb użytkowników i biznesu. Oferuję projektowanie i wdrażanie stron (landing page, wizytówki, portfolio), sklepy e-commerce, projekty graficzne w Figma, optymalizację i modernizację istniejących stron. Pracuję z technologiami takimi jak HTML, CSS, JavaScript, React, PHP, Laravel, WordPress, Vue, Nuxt, Inertia i Figma. Zapewniam terminowość, estetykę i indywidualne podejście do każdego zlecenia."
+        description: "Nazywam się Jakub Czajka i pełnię rolę menedżera projektów w Soft Synergy. Specjalizuję się w koordynowaniu zespołów oraz zarządzaniu realizacją nowoczesnych projektów IT. Dbam o sprawną komunikację, terminowość oraz najwyższą jakość dostarczanych rozwiązań. Moim celem jest zapewnienie klientom profesjonalnej obsługi i skutecznej realizacji ich celów biznesowych."
       },
       // Modules
       modules: project.modules && project.modules.length > 0 ? 
