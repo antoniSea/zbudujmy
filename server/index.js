@@ -85,7 +85,7 @@ const setupFollowUpReminderScheduler = () => {
       return;
     }
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'no-reply@soft-synergy.com',
+      from: 'development@soft-synergy.com',
       to,
       subject,
       html
@@ -110,7 +110,7 @@ const setupFollowUpReminderScheduler = () => {
         if (lastReminder && (now.getTime() - lastReminder.getTime()) < (24 * 60 * 60 * 1000)) continue;
 
         const numSent = Array.isArray(p.followUps) ? p.followUps.length : 0;
-        const subject = `Przypomnienie: Follow-up #${numSent + 1} dla oferty: ${p.name}`;
+        const subject = `Przypomnienie o dymaniu kolegi w dupe Follow-up #${numSent + 1} dla oferty: ${p.name}`;
         const html = `
           <p>Należy wysłać follow-up #${numSent + 1} dla oferty:</p>
           <ul>

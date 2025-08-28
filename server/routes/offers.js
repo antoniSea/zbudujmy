@@ -69,7 +69,7 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       mainBenefit: project.mainBenefit,
       // Offer details
       offerDate: new Date().toLocaleDateString('pl-PL'),
-      offerNumber: project.offerNumber || 'SS/2024/05/01',
+      offerNumber: project.offerNumber || `SS/${new Date().getFullYear()}/${(new Date().getMonth()+1).toString().padStart(2, '0')}/${project._id.toString().slice(-4)}`,
       // Project manager - zawsze Jakub Czajka
       projectManager: {
         name: "Jakub Czajka",
