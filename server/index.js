@@ -22,7 +22,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.tailwindcss.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
-      imgSrc: ["'self'", "data:", "https:", "https:///oferty.soft-synergy.com", "https://oferty.soft-synergy.com"],
+      imgSrc: ["'self'", "data:", "https:", "https://oferty.soft-synergy.com"],
       connectSrc: ["'self'"],
     },
   },

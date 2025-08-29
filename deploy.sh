@@ -158,12 +158,23 @@ install_nginx() {
 install_dependencies() {
     log_info "Instaluję zależności projektu..."
     
+    # Wyczyść cache npm
+    log_info "Czyszczę cache npm..."
+    npm cache clean --force
+    
+    # Usuń node_modules i package-lock.json
+    log_info "Usuwam stare zależności..."
+    rm -rf node_modules package-lock.json
+    rm -rf client/node_modules client/package-lock.json
+    
     # Instalacja zależności głównych
-    npm install
+    log_info "Instaluję zależności główne..."
+    npm install --production=false
     
     # Instalacja zależności klienta
+    log_info "Instaluję zależności klienta..."
     cd client
-    npm install
+    npm install --production=false
     cd ..
     
     log_success "Wszystkie zależności zainstalowane"
@@ -350,6 +361,46 @@ echo "API: https:///oferty.soft-synergy.com/api"
     echo ""
 }
 
+# Napraw problemy z React
+fix_react_issues() {
+    log_info "Sprawdzam i naprawiam problemy z React..."
+    
+    cd client
+    
+    # Sprawdź czy react-scripts jest zainstalowany
+    if ! npm list react-scripts; then
+        log_warning "react-scripts nie jest zainstalowany, instaluję..."
+        npm install react-scripts@latest
+    fi
+    
+    # Sprawdź wersję React
+    REACT_VERSION=$(npm list react --depth=0 | grep react | awk '{print $2}')
+    log_info "Wersja React: $REACT_VERSION"
+    
+    # Sprawdź wersję react-scripts
+    SCRIPTS_VERSION=$(npm list react-scripts --depth=0 | grep react-scripts | awk '{print $2}')
+    log_info "Wersja react-scripts: $SCRIPTS_VERSION"
+    
+    # Sprawdź czy build folder istnieje
+    if [ ! -d "build" ]; then
+        log_warning "Folder build nie istnieje, buduję aplikację..."
+        npm run build
+    fi
+    
+    # Sprawdź czy są problemy z webpack
+    if [ -f "build/static/js" ]; then
+        log_success "Webpack build wygląda poprawnie"
+    else
+        log_warning "Problemy z webpack build, próbuję naprawić..."
+        rm -rf build
+        npm run build
+    fi
+    
+    cd ..
+    
+    log_success "Sprawdzanie React zakończone"
+}
+
 # Funkcja główna
 main() {
     echo "=========================================="
@@ -366,6 +417,7 @@ main() {
     install_dependencies
     setup_environment
     build_client
+    fix_react_issues
     setup_pm2
     setup_nginx
     check_status

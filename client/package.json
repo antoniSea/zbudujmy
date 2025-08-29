@@ -49,5 +49,5 @@
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.21"
   },
-  "proxy": "https:///oferty.soft-synergy.com"
+  "proxy": "https://oferty.soft-synergy.com"
 } 
