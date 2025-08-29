@@ -321,18 +321,28 @@
             
             // Stwórz dedykowany HTML dla PDF
             const pdfHTML = createPDFContent();
-            console.log('Wygenerowany HTML:', pdfHTML);
+            alert('PDF HTML otrzymany, długość: ' + pdfHTML.length);
+            
+            // Stwórz tymczasowy element w DOM
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = pdfHTML;
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            document.body.appendChild(tempDiv);
             
             // Konfiguracja dla html2pdf
             const opt = {
-                margin: [15, 15, 15, 15],
+                margin: [10, 10, 10, 10],
                 filename: `oferta-{{offerNumber}}-{{clientName}}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
-                    scale: 1.5,
+                    scale: 1.2,
                     useCORS: true,
                     allowTaint: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    width: tempDiv.scrollWidth,
+                    height: tempDiv.scrollHeight
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -342,11 +352,17 @@
                 }
             };
             
-            // Generuj PDF z dedykowanego HTML
-            html2pdf().set(opt).from(pdfHTML).save().then(() => {
+            // Generuj PDF z elementu DOM
+            html2pdf().set(opt).from(tempDiv).save().then(() => {
+                // Usuń tymczasowy element
+                document.body.removeChild(tempDiv);
                 button.textContent = originalText;
                 button.disabled = false;
             }).catch(err => {
+                // Usuń tymczasowy element w przypadku błędu
+                if (document.body.contains(tempDiv)) {
+                    document.body.removeChild(tempDiv);
+                }
                 console.error('Błąd podczas generowania PDF:', err);
                 button.textContent = 'Błąd - spróbuj ponownie';
                 button.disabled = false;
