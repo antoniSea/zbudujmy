@@ -359,214 +359,31 @@
         }
         
         function createPDFContent() {
-            console.log('Tworzę zawartość PDF...');
+            console.log('=== FUNKCJA createPDFContent WYWOŁANA ===');
             
-            // Pobierz kluczowe dane z oferty
-            const clientName = '{{clientName}}';
-            const offerNumber = '{{offerNumber}}';
-            const offerDate = '{{offerDate}}';
-            const projectName = '{{projectName}}';
-            const mainBenefit = '{{mainBenefit}}';
-            const description = '{{description}}';
-            const projectManager = {
-                name: '{{projectManager.name}}',
-                position: '{{projectManager.position}}',
-                description: '{{projectManager.description}}',
-                email: '{{projectManager.email}}',
-                phone: '{{projectManager.phone}}'
-            };
-            
-            console.log('Dane oferty:', { clientName, offerNumber, offerDate, projectName, mainBenefit, description, projectManager });
-            
-            // Stwórz dedykowany HTML dla PDF
-            return `
+            // Test z prostymi danymi
+            const testHTML = `
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="UTF-8">
                     <style>
-                        body { 
-                            font-family: Arial, sans-serif; 
-                            margin: 0; 
-                            padding: 20px; 
-                            background: white; 
-                            color: black; 
-                            line-height: 1.6;
-                        }
-                        .header { 
-                            text-align: center; 
-                            border-bottom: 2px solid #3b82f6; 
-                            padding-bottom: 20px; 
-                            margin-bottom: 30px;
-                        }
-                        .company-name { 
-                            font-size: 28px; 
-                            font-weight: bold; 
-                            color: #3b82f6; 
-                            margin-bottom: 10px;
-                        }
-                        .offer-title { 
-                            font-size: 24px; 
-                            font-weight: bold; 
-                            margin-bottom: 10px;
-                        }
-                        .offer-details { 
-                            font-size: 14px; 
-                            color: #666; 
-                            margin-bottom: 20px;
-                        }
-                        .client-info { 
-                            background: #f8f9fa; 
-                            padding: 20px; 
-                            border-radius: 8px; 
-                            margin-bottom: 30px;
-                        }
-                        .section { 
-                            margin-bottom: 30px; 
-                            page-break-inside: avoid;
-                        }
-                        .section-title { 
-                            font-size: 20px; 
-                            font-weight: bold; 
-                            color: #3b82f6; 
-                            margin-bottom: 15px; 
-                            border-bottom: 1px solid #e5e7eb; 
-                            padding-bottom: 5px;
-                        }
-                        .project-manager { 
-                            background: #f8f9fa; 
-                            padding: 20px; 
-                            border-radius: 8px; 
-                            margin-bottom: 30px;
-                        }
-                        .manager-info { 
-                            display: flex; 
-                            align-items: center; 
-                            gap: 20px;
-                        }
-                        .manager-avatar { 
-                            width: 80px; 
-                            height: 80px; 
-                            border-radius: 50%; 
-                            background: #3b82f6; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            color: white; 
-                            font-size: 24px; 
-                            font-weight: bold;
-                        }
-                        .pricing-table { 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin: 20px 0;
-                        }
-                        .pricing-table th, .pricing-table td { 
-                            padding: 12px; 
-                            text-align: left; 
-                            border-bottom: 1px solid #e5e7eb;
-                        }
-                        .pricing-table th { 
-                            background: #f8f9fa; 
-                            font-weight: bold;
-                        }
-                        .total-row { 
-                            background: #3b82f6; 
-                            color: white; 
-                            font-weight: bold;
-                        }
-                        .page-break { page-break-before: always; }
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .test { color: red; font-size: 24px; }
                     </style>
                 </head>
                 <body>
-                    <div class="header">
-                        <div class="company-name">SoftSynergy</div>
-                        <div class="offer-title">Oferta Projektowa</div>
-                        <div class="offer-details">
-                            Data: ${offerDate} | Numer: ${offerNumber}
-                        </div>
-                    </div>
-                    
-                    <div class="client-info">
-                        <strong>Dla:</strong> ${clientName}<br>
-                        <strong>Projekt:</strong> ${projectName}<br>
-                        <strong>Główna korzyść:</strong> ${mainBenefit}
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">Opis Projektu</div>
-                        <p>${description}</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">Opiekun Projektu</div>
-                        <div class="project-manager">
-                            <div class="manager-info">
-                                <div class="manager-avatar">${projectManager.name.charAt(0)}</div>
-                                <div>
-                                    <strong>${projectManager.name}</strong><br>
-                                    <em>${projectManager.position}</em><br>
-                                    ${projectManager.description}<br>
-                                    Email: ${projectManager.email}<br>
-                                    Tel: ${projectManager.phone}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="page-break"></div>
-                    
-                    <div class="section">
-                        <div class="section-title">Harmonogram i Cennik</div>
-                        <table class="pricing-table">
-                            <thead>
-                                <tr>
-                                    <th>Etap</th>
-                                    <th>Koszt (PLN netto)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{timeline.phase1.name}}</td>
-                                    <td>{{formatCurrency pricing.phase1}}</td>
-                                </tr>
-                                <tr>
-                                    <td>{{timeline.phase2.name}}</td>
-                                    <td>{{formatCurrency pricing.phase2}}</td>
-                                </tr>
-                                <tr>
-                                    <td>{{timeline.phase3.name}}</td>
-                                    <td>{{formatCurrency pricing.phase3}}</td>
-                                </tr>
-                                <tr>
-                                    <td>{{timeline.phase4.name}}</td>
-                                    <td>{{formatCurrency pricing.phase4}}</td>
-                                </tr>
-                                <tr class="total-row">
-                                    <td><strong>RAZEM (netto)</strong></td>
-                                    <td><strong>{{formatCurrency pricing.total}}</strong></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">Warunki Współpracy</div>
-                        <p><strong>Płatność:</strong> 10% zaliczki po podpisaniu umowy, 90% po odbiorze końcowym.</p>
-                        <p><strong>Gwarancja:</strong> 3 miesiące gwarancji na poprawę błędów po wdrożeniu.</p>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">Kolejne Kroki</div>
-                        <ol>
-                            <li>Akceptacja oferty poprzez e-mail zwrotny</li>
-                            <li>Podpisanie umowy ramowej o współpracy</li>
-                            <li>Zaplanowanie warsztatu "kick-off" z opiekunem projektu</li>
-                        </ol>
-                    </div>
+                    <h1 class="test">TEST PDF - {{clientName}}</h1>
+                    <p>To jest test generowania PDF</p>
+                    <p>Klient: {{clientName}}</p>
+                    <p>Numer oferty: {{offerNumber}}</p>
+                    <p>Data: {{offerDate}}</p>
                 </body>
                 </html>
             `;
+            
+            console.log('Test HTML:', testHTML);
+            return testHTML;
         }
         document.getElementById('okej').addEventListener('click', downloadPDF);
     </script>
