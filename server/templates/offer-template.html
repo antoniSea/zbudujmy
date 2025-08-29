@@ -321,6 +321,7 @@
             
             // Stwórz dedykowany HTML dla PDF
             const pdfHTML = createPDFContent();
+            console.log('Wygenerowany HTML:', pdfHTML);
             
             // Konfiguracja dla html2pdf
             const opt = {
@@ -358,6 +359,8 @@
         }
         
         function createPDFContent() {
+            console.log('Tworzę zawartość PDF...');
+            
             // Pobierz kluczowe dane z oferty
             const clientName = '{{clientName}}';
             const offerNumber = '{{offerNumber}}';
@@ -372,6 +375,8 @@
                 email: '{{projectManager.email}}',
                 phone: '{{projectManager.phone}}'
             };
+            
+            console.log('Dane oferty:', { clientName, offerNumber, offerDate, projectName, mainBenefit, description, projectManager });
             
             // Stwórz dedykowany HTML dla PDF
             return `
