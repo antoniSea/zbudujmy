@@ -104,7 +104,9 @@
                 </div>
             </section>
 
-            <section class="reveal page-break">
+            <div class="page-break"></div>
+            
+            <section class="reveal">
                 <h2 class="text-3xl font-bold mb-8 text-center">Proponowane Rozwiązanie i Zakres Prac</h2>
                 <div class="space-y-8">
                     {{#each modules}}
@@ -153,8 +155,10 @@
                     </div>
                 </div>
             </section>
-
-            <section class="reveal page-break">
+            
+            <div class="page-break"></div>
+            
+            <section class="reveal">
                 <h2 class="text-3xl font-bold mb-8 text-center">Inwestycja i Warunki Współpracy</h2>
                 <div class="glass-card overflow-hidden print-bg-white">
                     <table class="w-full text-left">
@@ -345,18 +349,18 @@
             
             // Konfiguracja dla html2pdf
             const opt = {
-                margin: [15, 15, 15, 15],
+                margin: [10, 10, 10, 10],
                 filename: `oferta-{{offerNumber}}-{{clientName}}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { 
-                    scale: 1.5,
+                    scale: 1.2,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff',
-                    width: 794, // A4 width in pixels at 96 DPI
-                    height: 1123, // A4 height in pixels at 96 DPI
                     scrollX: 0,
-                    scrollY: 0
+                    scrollY: 0,
+                    windowWidth: 794,
+                    windowHeight: 1123
                 },
                 jsPDF: { 
                     unit: 'mm', 
@@ -387,7 +391,8 @@
             element.style.margin = '0';
             element.style.padding = '20px';
             element.style.width = '794px'; // A4 width
-            element.style.minHeight = '1123px'; // A4 height
+            element.style.height = 'auto'; // Automatyczna wysokość
+            element.style.overflow = 'visible';
             
             // Generuj PDF
             html2pdf().set(opt).from(element).save().then(() => {
