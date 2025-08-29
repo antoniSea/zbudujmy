@@ -224,46 +224,7 @@ router.get('/preview/:projectId', auth, async (req, res) => {
   }
 });
 
-// Download PDF offer
-router.get('/download/:projectId/pdf', auth, async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.projectId);
-    
-    if (!project) {
-      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
-    }
 
-    if (!project.generatedOfferUrl) {
-      return res.status(404).json({ message: 'Oferta nie została jeszcze wygenerowana' });
-    }
-
-    // Extract PDF filename from HTML filename
-    const htmlFileName = project.generatedOfferUrl.split('/').pop();
-    const pdfFileName = htmlFileName.replace('.html', '.pdf');
-    const pdfPath = path.join(__dirname, '../generated-offers', pdfFileName);
-
-    // Check if PDF exists
-    try {
-      await fs.access(pdfPath);
-    } catch (error) {
-      return res.status(404).json({ 
-        message: 'Plik PDF nie został znaleziony. Spróbuj ponownie wygenerować ofertę.',
-        error: 'PDF_NOT_FOUND'
-      });
-    }
-
-    // Send PDF file
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="oferta-${project.name}.pdf"`);
-    
-    const pdfBuffer = await fs.readFile(pdfPath);
-    res.send(pdfBuffer);
-
-  } catch (error) {
-    console.error('Download PDF error:', error);
-    res.status(500).json({ message: 'Błąd serwera podczas pobierania PDF' });
-  }
-});
 
 // Generate professional offer URL
 router.get('/professional-url/:projectId', auth, async (req, res) => {

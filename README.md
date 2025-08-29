@@ -102,7 +102,7 @@ ofertownik-soft-synergy/
 
 ### Oferty
 - `POST /api/offers/generate/:projectId` - generowanie oferty
-- `GET /api/offers/download/:projectId/pdf` - pobieranie PDF
+
 
 ### Portfolio
 - `GET /api/portfolio` - lista portfolio
