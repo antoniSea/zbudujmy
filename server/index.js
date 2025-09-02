@@ -47,7 +47,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static files
 app.use('/uploads/portfolio', express.static(path.join(__dirname, '../uploads/portfolio')));
-app.use('/generated-offers', express.static(path.join(__dirname, 'generated-offers')));
+
+// Generated offers with cache-busting
+app.use('/generated-offers', (req, res, next) => {
+  // Add cache-busting headers for offer files
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+}, express.static(path.join(__dirname, 'generated-offers')));
+
 app.use('/js', express.static(path.join(__dirname, 'public/js')));
 
 // Routes
@@ -182,6 +191,10 @@ app.get('/oferta-finalna/:projectName', async (req, res) => {
     // Read and serve the HTML file
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
     res.setHeader('Content-Type', 'text/html');
+    // Add cache-busting headers to prevent caching of old offers
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.send(htmlContent);
     
   } catch (error) {

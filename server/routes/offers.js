@@ -120,6 +120,22 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     const outputDir = path.join(__dirname, '../generated-offers');
     await fs.mkdir(outputDir, { recursive: true });
 
+    // Clean up old offer files for this project
+    try {
+      const existingFiles = await fs.readdir(outputDir);
+      const projectFiles = existingFiles.filter(file => file.startsWith(`offer-${project._id}-`));
+      
+      // Delete old files for this project
+      for (const oldFile of projectFiles) {
+        const oldFilePath = path.join(outputDir, oldFile);
+        await fs.unlink(oldFilePath);
+        console.log(`Deleted old offer file: ${oldFile}`);
+      }
+    } catch (cleanupError) {
+      console.error('Error cleaning up old offer files:', cleanupError);
+      // Continue with generation even if cleanup fails
+    }
+
     // Save HTML file
     const fileName = `offer-${project._id}-${Date.now()}.html`;
     const filePath = path.join(outputDir, fileName);
@@ -144,6 +160,22 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       
       const pdfBuffer = doc.output('arraybuffer');
 
+      // Clean up old PDF files for this project
+      try {
+        const existingFiles = await fs.readdir(outputDir);
+        const projectPdfFiles = existingFiles.filter(file => file.startsWith(`offer-${project._id}-`) && file.endsWith('.pdf'));
+        
+        // Delete old PDF files for this project
+        for (const oldPdfFile of projectPdfFiles) {
+          const oldPdfFilePath = path.join(outputDir, oldPdfFile);
+          await fs.unlink(oldPdfFilePath);
+          console.log(`Deleted old PDF file: ${oldPdfFile}`);
+        }
+      } catch (pdfCleanupError) {
+        console.error('Error cleaning up old PDF files:', pdfCleanupError);
+        // Continue with PDF generation even if cleanup fails
+      }
+
       // Save PDF file
       pdfFileName = `offer-${project._id}-${Date.now()}.pdf`;
       const pdfPath = path.join(outputDir, pdfFileName);
@@ -159,6 +191,13 @@ router.post('/generate/:projectId', auth, async (req, res) => {
     // Update project with generated offer URL
     project.generatedOfferUrl = `/generated-offers/${fileName}`;
     await project.save();
+
+    // Add cache-busting headers
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
 
     res.json({
       message: pdfUrl ? 'Oferta została wygenerowana pomyślnie' : 'Oferta HTML została wygenerowana pomyślnie (PDF nie udało się wygenerować)',
