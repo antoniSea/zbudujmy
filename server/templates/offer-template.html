@@ -209,7 +209,7 @@
                 <div class="mt-8 grid md:grid-cols-2 gap-8">
                     <div class="glass-card p-6">
                         <h4 class="font-bold text-lg mb-2">Warunki Płatności</h4>
-                        <p class="text-slate-400 print-text-gray">10% zaliczki po podpisaniu umowy.<br>90% po odbiorze końcowym projektu.</p>
+                        <p class="text-slate-400 print-text-gray">{{#if customPaymentTerms}}{{customPaymentTerms}}{{else}}10% zaliczki po podpisaniu umowy.<br>90% po odbiorze końcowym projektu.{{/if}}</p>
                     </div>
                     <div class="glass-card p-6">
                         <h4 class="font-bold text-lg mb-2">Gwarancja i Wsparcie</h4>

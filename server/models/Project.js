@@ -152,6 +152,10 @@ const projectSchema = new mongoose.Schema({
   customReservations: {
     type: [String],
     default: []
+  },
+  customPaymentTerms: {
+    type: String,
+    default: '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.'
   }
 }, {
   timestamps: true

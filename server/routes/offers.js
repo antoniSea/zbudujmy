@@ -107,6 +107,8 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       })),
       // Custom reservations
       customReservations: project.customReservations || [],
+      // Custom payment terms
+      customPaymentTerms: project.customPaymentTerms || '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.',
       // Company details
       companyEmail: 'jakub.czajka@soft-synergy.com',
       companyPhone: '+48 793 868 886',
@@ -250,6 +252,7 @@ router.get('/preview/:projectId', auth, async (req, res) => {
       pricing: project.pricing,
       portfolio: portfolio,
       customReservations: project.customReservations || [],
+      customPaymentTerms: project.customPaymentTerms || '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.',
       companyEmail: 'jakub.czajka@soft-synergy.com',
       companyPhone: '+48 793 868 886',
       companyNIP: '123-456-78-90'

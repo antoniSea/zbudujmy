@@ -52,7 +52,8 @@ const ProjectForm = () => {
     status: 'draft',
     priority: 'normal',
     notes: [],
-    customReservations: []
+    customReservations: [],
+    customPaymentTerms: '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.'
   });
 
   const { data: project, isLoading } = useQuery(
@@ -679,6 +680,27 @@ const ProjectForm = () => {
                   }).format(totalPrice)}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Terms */}
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Warunki płatności</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="form-label">Warunki płatności</label>
+              <textarea
+                name="customPaymentTerms"
+                value={formData.customPaymentTerms}
+                onChange={handleChange}
+                rows={4}
+                className="input-field"
+                placeholder="Wprowadź warunki płatności..."
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Możesz dostosować warunki płatności do konkretnego projektu (np. 3 transze, różne terminy, itp.)
+              </p>
             </div>
           </div>
         </div>
