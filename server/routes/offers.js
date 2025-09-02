@@ -73,7 +73,7 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       // Project manager - zawsze Jakub Czajka
       projectManager: {
         name: "Jakub Czajka",
-        position: "Project Manager",
+        position: "Senior Project Manager",
         email: "jakub.czajka@soft-synergy.com",
         phone: "+48 793 868 886",
         avatar: "/generated-offers/jakub czajka.jpeg",
@@ -105,6 +105,8 @@ router.post('/generate/:projectId', auth, async (req, res) => {
         isActive: item.isActive,
         order: item.order
       })),
+      // Custom reservations
+      customReservations: project.customReservations || [],
       // Company details
       companyEmail: 'jakub.czajka@soft-synergy.com',
       companyPhone: '+48 793 868 886',
@@ -208,6 +210,7 @@ router.get('/preview/:projectId', auth, async (req, res) => {
       timeline: project.timeline,
       pricing: project.pricing,
       portfolio: portfolio,
+      customReservations: project.customReservations || [],
       companyEmail: 'jakub.czajka@soft-synergy.com',
       companyPhone: '+48 793 868 886',
       companyNIP: '123-456-78-90'

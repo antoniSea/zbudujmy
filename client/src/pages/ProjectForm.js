@@ -51,7 +51,8 @@ const ProjectForm = () => {
     },
     status: 'draft',
     priority: 'normal',
-    notes: []
+    notes: [],
+    customReservations: []
   });
 
   const { data: project, isLoading } = useQuery(
@@ -163,6 +164,29 @@ const ProjectForm = () => {
           [field]: value
         }
       }
+    }));
+  };
+
+  const handleReservationChange = (index, value) => {
+    setFormData(prev => ({
+      ...prev,
+      customReservations: prev.customReservations.map((reservation, i) => 
+        i === index ? value : reservation
+      )
+    }));
+  };
+
+  const addReservation = () => {
+    setFormData(prev => ({
+      ...prev,
+      customReservations: [...prev.customReservations, '']
+    }));
+  };
+
+  const removeReservation = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      customReservations: prev.customReservations.filter((_, i) => i !== index)
     }));
   };
 
@@ -656,6 +680,47 @@ const ProjectForm = () => {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Custom Reservations */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium text-gray-900">Dodatkowe zastrzeżenia</h2>
+            <button
+              type="button"
+              onClick={addReservation}
+              className="btn-secondary flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Dodaj zastrzeżenie
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            {formData.customReservations.map((reservation, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={reservation}
+                  onChange={(e) => handleReservationChange(index, e.target.value)}
+                  className="input-field flex-1"
+                  placeholder="Wprowadź dodatkowe zastrzeżenie..."
+                />
+                <button
+                  type="button"
+                  onClick={() => removeReservation(index)}
+                  className="text-red-600 hover:text-red-800 p-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {formData.customReservations.length === 0 && (
+              <p className="text-sm text-gray-500 italic">
+                Brak dodatkowych zastrzeżeń. Kliknij "Dodaj zastrzeżenie" aby dodać własne.
+              </p>
+            )}
           </div>
         </div>
 

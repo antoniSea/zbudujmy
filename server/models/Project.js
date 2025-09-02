@@ -148,6 +148,10 @@ const projectSchema = new mongoose.Schema({
   lastFollowUpReminderAt: {
     type: Date,
     default: null
+  },
+  customReservations: {
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true
