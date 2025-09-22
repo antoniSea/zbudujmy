@@ -491,15 +491,20 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         doc.font('Regular').fontSize(10).text('Zamawiający', doc.page.margins.left, yStart + 35, { width: colWidth, align: 'left' });
         // Right
         const rightX = doc.page.margins.left + colWidth + 20;
-        doc.moveTo(rightX, yStart + 30).lineTo(rightX + colWidth, yStart + 30).stroke();
-        // Signature image
+        const lineY = yStart + 30;
+        doc.moveTo(rightX, lineY).lineTo(rightX + colWidth, lineY).stroke();
+        // Signature image (2x bigger, placed below the line, offset by 25px)
         try {
           const sigPath = path.join(__dirname, '../public/img/podpis-jakub-czajka.jpg');
-          doc.image(sigPath, rightX + colWidth - 140, yStart - 5, { width: 120, align: 'right' });
+          const sigWidth = 240; // 2x bigger
+          const sigX = rightX + colWidth - sigWidth;
+          const sigY = lineY + 25; // 25px below the line to avoid overlap
+          doc.image(sigPath, sigX, sigY, { width: sigWidth, align: 'right' });
         } catch (e) {
           // ignore if image not found
         }
-        doc.font('Regular').text('Jakub Czajka\ndziałający w ramach marki Soft Synergy', rightX, yStart + 35, { width: colWidth, align: 'right' });
+        // Place caption under the signature image
+        doc.font('Regular').text('Jakub Czajka\ndziałający w ramach marki Soft Synergy', rightX, lineY + 25 + 70, { width: colWidth, align: 'right' });
 
         doc.end();
         stream.on('finish', resolve);
