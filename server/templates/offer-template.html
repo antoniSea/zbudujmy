@@ -79,6 +79,19 @@
 
         <main class="space-y-24">
             
+            {{#if (eq offerType 'preliminary')}}
+            <!-- Special section for preliminary offers -->
+            <section class="reveal">
+                <div class="glass-card p-8 mb-8 border-l-4 border-yellow-500">
+                    <h2 class="text-2xl font-bold mb-4 text-yellow-400">📋 Oferta Wstępna / Konsultacja</h2>
+                    <p class="text-slate-300 print-text-gray text-lg">
+                        Niniejsza oferta ma charakter wstępny i konsultacyjny. Po dokładnym poznaniu Państwa potrzeb 
+                        i wymagań przygotujemy szczegółową ofertę finalną z precyzyjną wyceną.
+                    </p>
+                </div>
+            </section>
+            {{/if}}
+
             <section class="reveal">
                 <h2 class="text-3xl font-bold mb-4">Szanowni Państwo,</h2>
                 <div class="prose prose-invert max-w-none text-slate-300 text-lg leading-relaxed print-text-gray">
@@ -201,7 +214,17 @@
                         <tfoot>
                             <tr class="bg-blue-600/80">
                                 <td class="p-5 text-right font-bold text-lg text-white">RAZEM (netto)</td>
-                                <td class="p-5 text-right font-extrabold text-2xl text-white">{{formatCurrency pricing.total}}</td>
+                                <td class="p-5 text-right font-extrabold text-2xl text-white">
+                                    {{#if priceRange.min}}
+                                        {{#if priceRange.max}}
+                                            {{formatCurrency priceRange.min}} - {{formatCurrency priceRange.max}}
+                                        {{else}}
+                                            od {{formatCurrency priceRange.min}}
+                                        {{/if}}
+                                    {{else}}
+                                        {{formatCurrency pricing.total}}
+                                    {{/if}}
+                                </td>
                             </tr>
                         </tfoot>
                     </table>
@@ -244,6 +267,23 @@
             
             <section class="reveal text-center">
                 <h2 class="text-3xl font-bold mb-4">Kolejne Kroki</h2>
+                {{#if (eq offerType 'preliminary')}}
+                <p class="max-w-2xl mx-auto text-slate-300 mb-8 print-text-gray">Dziękujemy za zainteresowanie naszymi usługami. Oto jak możemy kontynuować współpracę:</p>
+                <ol class="text-left max-w-md mx-auto space-y-4 mb-12">
+                    <li class="flex items-center gap-4">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 font-bold">1</span>
+                        <span>Potwierdzenie zainteresowania i zgoda na dalsze konsultacje.</span>
+                    </li>
+                    <li class="flex items-center gap-4">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-700 font-bold">2</span>
+                        <span>Szczegółowa analiza wymagań i przygotowanie oferty finalnej.</span>
+                    </li>
+                    <li class="flex items-center gap-4">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-700 font-bold">3</span>
+                        <span>Prezentacja finalnej oferty z precyzyjną wyceną.</span>
+                    </li>
+                </ol>
+                {{else}}
                 <p class="max-w-2xl mx-auto text-slate-300 mb-8 print-text-gray">Jesteśmy podekscytowani perspektywą współpracy. Oto jak możemy rozpocząć:</p>
                 <ol class="text-left max-w-md mx-auto space-y-4 mb-12">
                     <li class="flex items-center gap-4">
@@ -259,8 +299,13 @@
                         <span>Zaplanowanie warsztatu "kick-off" z Państwa opiekunem projektu.</span>
                     </li>
                 </ol>
+                {{/if}}
                 <div class="flex flex-col md:flex-row justify-center items-center gap-6 no-print">
+                    {{#if (eq offerType 'preliminary')}}
+                    <a href="mailto:{{companyEmail}}?subject=Kontynuacja konsultacji - {{offerNumber}} dla {{clientName}}" class="w-full md:w-auto bg-blue-600 text-white font-bold text-lg py-3 px-8 rounded-lg transition-all duration-300 hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-1">Kontynuuję konsultacje</a>
+                    {{else}}
                     <a href="mailto:{{companyEmail}}?subject=Akceptacja oferty {{offerNumber}} dla {{clientName}}" class="w-full md:w-auto bg-blue-600 text-white font-bold text-lg py-3 px-8 rounded-lg transition-all duration-300 hover:bg-blue-500 hover:shadow-2xl hover:shadow-blue-500/40 transform hover:-translate-y-1">Akceptuję i rozpoczynam współpracę</a>
+                    {{/if}}
                     <button onclick="downloadHTML(event)" class="w-full md:w-auto bg-white/10 text-white font-semibold py-3 px-8 rounded-lg transition-colors hover:bg-white/20" id="okej">Pobierz ofertę</button>
                 </div>
             </section>

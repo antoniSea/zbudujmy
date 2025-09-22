@@ -27,6 +27,11 @@ handlebars.registerHelper('add', function(a, b) {
   return a + b;
 });
 
+// Helper function to check equality
+handlebars.registerHelper('eq', function(a, b) {
+  return a === b;
+});
+
 // Generate offer HTML
 router.post('/generate/:projectId', auth, async (req, res) => {
   try {
@@ -70,6 +75,8 @@ router.post('/generate/:projectId', auth, async (req, res) => {
       // Offer details
       offerDate: new Date().toLocaleDateString('pl-PL'),
       offerNumber: project.offerNumber || `SS/${new Date().getFullYear()}/${(new Date().getMonth()+1).toString().padStart(2, '0')}/${project._id.toString().slice(-4)}`,
+      offerType: project.offerType || 'final',
+      priceRange: project.priceRange,
       // Project manager - zawsze Jakub Czajka
       projectManager: {
         name: "Jakub Czajka",
@@ -246,6 +253,8 @@ router.get('/preview/:projectId', auth, async (req, res) => {
       mainBenefit: project.mainBenefit,
       offerDate: new Date().toLocaleDateString('pl-PL'),
       offerNumber: project.offerNumber || 'SS/2024/05/01',
+      offerType: project.offerType || 'final',
+      priceRange: project.priceRange,
       projectManager: project.projectManager,
       modules: project.modules,
       timeline: project.timeline,

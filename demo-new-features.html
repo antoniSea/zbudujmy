@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Nowe funkcjonalności Ofertownika</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card { background: white; border-radius: 8px; padding: 24px; margin: 16px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .form-label { display: block; font-weight: 500; margin-bottom: 8px; color: #374151; }
+        .input-field { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; }
+        .btn-primary { background: #3b82f6; color: white; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-secondary { background: #6b7280; color: white; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Demo - Nowe funkcjonalności Ofertownika</h1>
+        
+        <!-- Typ oferty -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">1. Typ oferty</h2>
+            <div class="mb-4">
+                <label class="form-label">Typ oferty</label>
+                <select id="offerType" class="input-field" onchange="updateDemo()">
+                    <option value="final">Oferta finalna</option>
+                    <option value="preliminary">Oferta wstępna / Konsultacja</option>
+                </select>
+                <p class="text-sm text-gray-600 mt-1">
+                    Oferta wstępna jest dla klientów w trakcie konsultacji
+                </p>
+            </div>
+        </div>
+
+        <!-- Widełki cenowe -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">2. Widełki cenowe</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label">Cena minimalna (PLN)</label>
+                    <input type="number" id="minPrice" class="input-field" placeholder="np. 45000" onchange="updateDemo()">
+                </div>
+                <div>
+                    <label class="form-label">Cena maksymalna (PLN)</label>
+                    <input type="number" id="maxPrice" class="input-field" placeholder="np. 75000" onchange="updateDemo()">
+                </div>
+            </div>
+            <div id="priceRangeDisplay" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" style="display: none;">
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-medium text-gray-900">Widełki cenowe</span>
+                    <span class="text-xl font-bold text-blue-600" id="priceRangeText"></span>
+                </div>
+                <p class="text-sm text-gray-600 mt-2">
+                    Oferta będzie wyświetlać widełki cenowe zamiast konkretnej kwoty
+                </p>
+            </div>
+        </div>
+
+        <!-- Podgląd oferty -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">3. Podgląd oferty</h2>
+            <div id="offerPreview" class="border border-gray-300 rounded-lg p-6 bg-white">
+                <!-- Tutaj będzie podgląd oferty -->
+            </div>
+        </div>
+
+        <!-- Przykładowe dane -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4">4. Przykładowe dane</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <button class="btn-primary" onclick="loadExample('preliminary')">Załaduj przykład oferty wstępnej</button>
+                <button class="btn-secondary" onclick="loadExample('final')">Załaduj przykład oferty finalnej</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDemo() {
+            const offerType = document.getElementById('offerType').value;
+            const minPrice = document.getElementById('minPrice').value;
+            const maxPrice = document.getElementById('maxPrice').value;
+            
+            // Aktualizuj widełki cenowe
+            if (minPrice && maxPrice) {
+                document.getElementById('priceRangeDisplay').style.display = 'block';
+                document.getElementById('priceRangeText').textContent = 
+                    formatCurrency(minPrice) + ' - ' + formatCurrency(maxPrice);
+            } else {
+                document.getElementById('priceRangeDisplay').style.display = 'none';
+            }
+            
+            // Aktualizuj podgląd
+            updateOfferPreview(offerType, minPrice, maxPrice);
+        }
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('pl-PL', {
+                style: 'currency',
+                currency: 'PLN'
+            }).format(amount);
+        }
+        
+        function updateOfferPreview(offerType, minPrice, maxPrice) {
+            const preview = document.getElementById('offerPreview');
+            
+            let priceDisplay = '72 000,00 zł';
+            if (minPrice && maxPrice) {
+                priceDisplay = formatCurrency(minPrice) + ' - ' + formatCurrency(maxPrice);
+            }
+            
+            let preliminarySection = '';
+            if (offerType === 'preliminary') {
+                preliminarySection = `
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+                        <h3 class="text-lg font-bold text-yellow-800 mb-2">📋 Oferta Wstępna / Konsultacja</h3>
+                        <p class="text-gray-700">
+                            Niniejsza oferta ma charakter wstępny i konsultacyjny. Po dokładnym poznaniu Państwa potrzeb 
+                            i wymagań przygotujemy szczegółową ofertę finalną z precyzyjną wyceną.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            let nextSteps = '';
+            if (offerType === 'preliminary') {
+                nextSteps = `
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold mb-4">Kolejne Kroki</h3>
+                        <p class="text-gray-600 mb-4">Dziękujemy za zainteresowanie naszymi usługami. Oto jak możemy kontynuować współpracę:</p>
+                        <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                            <li>Potwierdzenie zainteresowania i zgoda na dalsze konsultacje.</li>
+                            <li>Szczegółowa analiza wymagań i przygotowanie oferty finalnej.</li>
+                            <li>Prezentacja finalnej oferty z precyzyjną wyceną.</li>
+                        </ol>
+                        <div class="mt-6">
+                            <button class="btn-primary">Kontynuuję konsultacje</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                nextSteps = `
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold mb-4">Kolejne Kroki</h3>
+                        <p class="text-gray-600 mb-4">Jesteśmy podekscytowani perspektywą współpracy. Oto jak możemy rozpocząć:</p>
+                        <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                            <li>Akceptacja oferty poprzez e-mail zwrotny.</li>
+                            <li>Podpisanie umowy ramowej o współpracy.</li>
+                            <li>Zaplanowanie warsztatu "kick-off" z Państwa opiekunem projektu.</li>
+                        </ol>
+                        <div class="mt-6">
+                            <button class="btn-primary">Akceptuję i rozpoczynam współpracę</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            preview.innerHTML = `
+                <div class="border-b pb-4 mb-6">
+                    <h2 class="text-2xl font-bold">Oferta Projektowa</h2>
+                    <p class="text-gray-600">Data: ${new Date().toLocaleDateString('pl-PL')}</p>
+                    <p class="text-gray-600">Numer: SS/2025/01/01</p>
+                </div>
+                
+                ${preliminarySection}
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Szanowni Państwo,</h3>
+                    <p class="text-gray-700 mb-4">
+                        Dziękujemy za poświęcony czas i inspirującą rozmowę na temat projektu <strong>Aplikacja E-commerce</strong>. 
+                        W Soft Synergy rozumiemy, że Państwa celem jest nie tylko stworzenie aplikacji, ale strategiczne 
+                        wzmocnienie pozycji rynkowej poprzez <strong>cyfryzację kluczowych procesów sprzedażowych</strong>.
+                    </p>
+                    <p class="text-gray-700">
+                        Projekt obejmuje stworzenie nowoczesnej platformy e-commerce z zaawansowanym systemem zarządzania 
+                        produktami, integracją z systemami płatności oraz responsywnym interfejsem użytkownika.
+                    </p>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Harmonogram i Cennik</h3>
+                    <table class="w-full border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border border-gray-300 p-3 text-left">Faza</th>
+                                <th class="border border-gray-300 p-3 text-right">Cena</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border border-gray-300 p-3">Faza I: Discovery</td>
+                                <td class="border border-gray-300 p-3 text-right">8 000,00 zł</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-300 p-3">Faza II: Design & Prototyp</td>
+                                <td class="border border-gray-300 p-3 text-right">0,00 zł</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-300 p-3">Faza III: Development</td>
+                                <td class="border border-gray-300 p-3 text-right">56 000,00 zł</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-300 p-3">Faza IV: Testy i Wdrożenie</td>
+                                <td class="border border-gray-300 p-3 text-right">8 000,00 zł</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-blue-600">
+                                <td class="border border-gray-300 p-3 text-right font-bold text-white">RAZEM (netto)</td>
+                                <td class="border border-gray-300 p-3 text-right font-bold text-white">${priceDisplay}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                ${nextSteps}
+            `;
+        }
+        
+        function loadExample(type) {
+            document.getElementById('offerType').value = type;
+            
+            if (type === 'preliminary') {
+                document.getElementById('minPrice').value = '45000';
+                document.getElementById('maxPrice').value = '75000';
+            } else {
+                document.getElementById('minPrice').value = '';
+                document.getElementById('maxPrice').value = '';
+            }
+            
+            updateDemo();
+        }
+        
+        // Inicjalizacja
+        updateDemo();
+    </script>
+</body>
+</html>

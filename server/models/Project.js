@@ -73,6 +73,15 @@ const projectSchema = new mongoose.Schema({
     phase4: { type: Number, default: 8000 },
     total: { type: Number, required: true }
   },
+  offerType: {
+    type: String,
+    enum: ['final', 'preliminary'],
+    default: 'final'
+  },
+  priceRange: {
+    min: { type: Number, default: null },
+    max: { type: Number, default: null }
+  },
   projectManager: {
     name: {
       type: String,

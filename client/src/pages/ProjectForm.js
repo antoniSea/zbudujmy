@@ -42,6 +42,11 @@ const ProjectForm = () => {
       phase3: 56000,
       phase4: 8000
     },
+    offerType: 'final',
+    priceRange: {
+      min: null,
+      max: null
+    },
     projectManager: {
       name: '',
       position: 'Senior Project Manager',
@@ -177,6 +182,16 @@ const ProjectForm = () => {
     }));
   };
 
+  const handlePriceRangeChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      priceRange: {
+        ...prev.priceRange,
+        [field]: value ? parseFloat(value) : null
+      }
+    }));
+  };
+
   const addReservation = () => {
     setFormData(prev => ({
       ...prev,
@@ -207,6 +222,11 @@ const ProjectForm = () => {
       pricing: {
         ...formData.pricing,
         total: totalPrice
+      },
+      // Obsługa widełek cenowych - jeśli są ustawione, używamy ich zamiast total
+      priceRange: {
+        min: formData.priceRange.min || null,
+        max: formData.priceRange.max || null
       }
     };
     
@@ -319,6 +339,21 @@ const ProjectForm = () => {
                 <option value="high">Wysoki</option>
                 <option value="urgent">Pilny</option>
               </select>
+            </div>
+            <div>
+              <label className="form-label">Typ oferty</label>
+              <select
+                name="offerType"
+                value={formData.offerType}
+                onChange={handleChange}
+                className="input-field"
+              >
+                <option value="final">Oferta finalna</option>
+                <option value="preliminary">Oferta wstępna / Konsultacja</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Oferta wstępna jest dla klientów w trakcie konsultacji
+              </p>
             </div>
           </div>
         </div>
@@ -681,6 +716,64 @@ const ProjectForm = () => {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Widełki cenowe</h2>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="form-label">Cena minimalna (PLN)</label>
+                <input
+                  type="number"
+                  value={formData.priceRange.min || ''}
+                  onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                  className="input-field"
+                  min="0"
+                  placeholder="np. 45000"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Opcjonalnie - dla ofert z widełkami cenowymi
+                </p>
+              </div>
+              
+              <div>
+                <label className="form-label">Cena maksymalna (PLN)</label>
+                <input
+                  type="number"
+                  value={formData.priceRange.max || ''}
+                  onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                  className="input-field"
+                  min="0"
+                  placeholder="np. 75000"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Opcjonalnie - dla ofert z widełkami cenowymi
+                </p>
+              </div>
+            </div>
+            
+            {formData.priceRange.min && formData.priceRange.max && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-medium text-gray-900">Widełki cenowe</span>
+                  <span className="text-xl font-bold text-blue-600">
+                    {new Intl.NumberFormat('pl-PL', {
+                      style: 'currency',
+                      currency: 'PLN'
+                    }).format(formData.priceRange.min)} - {new Intl.NumberFormat('pl-PL', {
+                      style: 'currency',
+                      currency: 'PLN'
+                    }).format(formData.priceRange.max)}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Oferta będzie wyświetlać widełki cenowe zamiast konkretnej kwoty
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
