@@ -348,19 +348,31 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         const stream = require('fs').createWriteStream(pdfPath);
         doc.pipe(stream);
 
+        // Register Unicode fonts (system DejaVu fonts)
+        const systemRegular = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
+        const systemBold = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+        try {
+          doc.registerFont('Regular', systemRegular);
+          doc.registerFont('Bold', systemBold);
+        } catch (e) {
+          // Fallback to built-in fonts if system fonts missing (may cause diacritics issues)
+          doc.registerFont('Regular', 'Helvetica');
+          doc.registerFont('Bold', 'Helvetica-Bold');
+        }
+
         // Title
-        doc.font('Helvetica-Bold').fontSize(18).text(`Umowa realizacji ${project.name}`, { align: 'left' });
+        doc.font('Bold').fontSize(18).text(`Umowa realizacji ${project.name}`, { align: 'left' });
         doc.moveDown(0.5);
-        doc.font('Helvetica').fontSize(11).fillColor('#333').text(`zawarta w dniu ${new Date().toLocaleDateString('pl-PL')} pomiędzy:`);
+        doc.font('Regular').fontSize(11).fillColor('#333').text(`zawarta w dniu ${new Date().toLocaleDateString('pl-PL')} pomiędzy:`);
 
         // Parties
         doc.moveDown(0.8);
-        doc.fillColor('#000').font('Helvetica-Bold').fontSize(12).text('Jakub Czajka');
-        doc.font('Helvetica').fontSize(11).text('działający w ramach marki Soft Synergy');
+        doc.fillColor('#000').font('Bold').fontSize(12).text('Jakub Czajka');
+        doc.font('Regular').fontSize(11).text('działający w ramach marki Soft Synergy');
         doc.moveDown(0.6);
         doc.text('a');
         doc.moveDown(0.6);
-        doc.font('Helvetica-Bold').text(project.clientName || '[Dane Klienta]');
+        doc.font('Bold').text(project.clientName || '[Dane Klienta]');
 
         // Rule
         doc.moveDown(0.6);
@@ -368,11 +380,11 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
 
         const sectionHeader = (title) => {
           doc.moveDown(1);
-          doc.font('Helvetica-Bold').fontSize(13).fillColor('#000').text(title);
+          doc.font('Bold').fontSize(13).fillColor('#000').text(title);
         };
         const bulletList = (items) => {
           doc.moveDown(0.2);
-          doc.font('Helvetica').fontSize(11).fillColor('#000');
+          doc.font('Regular').fontSize(11).fillColor('#000');
           items.forEach((t, idx) => {
             doc.text(`${idx + 1}. ${t}`, { indent: 14 });
           });
@@ -380,7 +392,7 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
 
         // §1
         sectionHeader('§1. Przedmiot umowy');
-        doc.font('Helvetica').fontSize(11).text(`Wykonawca zobowiązuje się do realizacji projektu "${project.name}" zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia ${new Date().toLocaleDateString('pl-PL')}).`);
+        doc.font('Regular').fontSize(11).text(`Wykonawca zobowiązuje się do realizacji projektu "${project.name}" zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia ${new Date().toLocaleDateString('pl-PL')}).`);
 
         // §2
         sectionHeader('§2. Zakres prac');
@@ -397,7 +409,7 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         // §4
         sectionHeader('§4. Wynagrodzenie i płatności');
         const total = currency(project?.pricing?.total || 0);
-        doc.font('Helvetica').fontSize(11).text(`Łączne wynagrodzenie za realizację prac wynosi ${total} netto.`);
+        doc.font('Regular').fontSize(11).text(`Łączne wynagrodzenie za realizację prac wynosi ${total} netto.`);
         doc.moveDown(0.2);
         doc.text('Warunki płatności:');
         const terms = (project.customPaymentTerms || '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.').split(/\n+/);
@@ -435,11 +447,11 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         const colWidth = pageWidth / 2 - 10;
         // Left
         doc.moveTo(doc.page.margins.left, yStart + 30).lineTo(doc.page.margins.left + colWidth, yStart + 30).strokeColor('#000').lineWidth(1).stroke();
-        doc.fontSize(10).text('Zamawiający', doc.page.margins.left, yStart + 35, { width: colWidth, align: 'left' });
+        doc.font('Regular').fontSize(10).text('Zamawiający', doc.page.margins.left, yStart + 35, { width: colWidth, align: 'left' });
         // Right
         const rightX = doc.page.margins.left + colWidth + 20;
         doc.moveTo(rightX, yStart + 30).lineTo(rightX + colWidth, yStart + 30).stroke();
-        doc.text('Jakub Czajka\ndziałający w ramach marki Soft Synergy', rightX, yStart + 35, { width: colWidth, align: 'right' });
+        doc.font('Regular').text('Jakub Czajka\ndziałający w ramach marki Soft Synergy', rightX, yStart + 35, { width: colWidth, align: 'right' });
 
         doc.end();
         stream.on('finish', resolve);
