@@ -16,6 +16,8 @@
 - ✅ **NAPRAWIONO**: Walidacja backendowa - pola `description`, `mainBenefit`, `projectManager` nie są wymagane dla ofert wstępnych
 - ✅ **NAPRAWIONO**: Model Project - pola wymagane tylko dla ofert finalnych
 - ✅ **NAPRAWIONO**: Logika submit w formularzu - wysyła domyślne wartości dla ofert wstępnych
+- ✅ **NAPRAWIONO**: Przycisk konwersji - teraz pokazuje modal z formularzem zamiast błędu
+- ✅ **DODANO**: Modal konwersji z formularzem do wypełnienia brakujących danych
 
 ### 2. Widełki cenowe
 - ✅ Dodano nowe pole `priceRange` do modelu Project z polami `min` i `max`
@@ -116,6 +118,18 @@ Utworzono interaktywne demo (`demo-new-features.html`) które pozwala:
 
 **Test**: ✅ Oferta wstępna akceptuje tylko podstawowe dane klienta
 **Test**: ✅ Oferta finalna wymaga wszystkich pól
+
+### Problem z przyciskiem konwersji
+**Problem**: Przycisk "Przekształć w standardową ofertę" wywalał błąd zamiast pokazać popup z danymi do wypełnienia.
+
+**Rozwiązanie**:
+1. **Modal konwersji**: Dodano modal z formularzem do wypełnienia brakujących danych
+2. **Domyślne wartości**: Modal automatycznie wypełnia się notatkami konsultacyjnymi i danymi Jakuba Czajki
+3. **Walidacja**: Modal wymaga wypełnienia wszystkich obowiązkowych pól przed konwersją
+4. **UX**: Modal jest responsywny i ma przycisk anulowania
+
+**Test**: ✅ Przycisk konwersji pokazuje modal z formularzem
+**Test**: ✅ Modal wymaga wypełnienia wszystkich pól przed konwersją
 
 ## ✅ Status
 Wszystkie funkcjonalności zostały zaimplementowane i są gotowe do użycia. Kod nie zawiera błędów lintera i jest zgodny z istniejącą architekturą aplikacji. Problem z walidacją został naprawiony.

@@ -104,6 +104,35 @@ const ProjectForm = () => {
     }
   });
 
+  const [showConvertModal, setShowConvertModal] = useState(false);
+  const [convertData, setConvertData] = useState({
+    description: '',
+    mainBenefit: '',
+    projectManager: {
+      name: '',
+      position: 'Senior Project Manager',
+      email: '',
+      phone: '',
+      description: ''
+    },
+    modules: [{ name: '', description: '', color: 'blue' }],
+    timeline: {
+      phase1: { name: 'Faza I: Discovery', duration: 'Tydzień 1-2' },
+      phase2: { name: 'Faza II: Design & Prototyp', duration: 'Tydzień 3-4' },
+      phase3: { name: 'Faza III: Development', duration: 'Tydzień 5-12' },
+      phase4: { name: 'Faza IV: Testy i Wdrożenie', duration: 'Tydzień 13-14' }
+    },
+    pricing: {
+      phase1: 8000,
+      phase2: 0,
+      phase3: 56000,
+      phase4: 8000
+    },
+    priceRange: { min: null, max: null },
+    customReservations: [],
+    customPaymentTerms: '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.'
+  });
+
   const convertToFinalMutation = useMutation(
     (data) => projectsAPI.update(id, { ...data, offerType: 'final' }),
     {
@@ -111,6 +140,7 @@ const ProjectForm = () => {
         toast.success('Oferta wstępna została przekształcona w standardową ofertę!');
         queryClient.invalidateQueries(['project', id]);
         queryClient.invalidateQueries('projects');
+        setShowConvertModal(false);
       },
       onError: (error) => {
         toast.error('Błąd podczas przekształcania oferty');
@@ -207,6 +237,33 @@ const ProjectForm = () => {
     }));
   };
 
+  const handleConvertDataChange = (field, value) => {
+    setConvertData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleConvertManagerChange = (field, value) => {
+    setConvertData(prev => ({
+      ...prev,
+      projectManager: {
+        ...prev.projectManager,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleConvertPricingChange = (phase, value) => {
+    setConvertData(prev => ({
+      ...prev,
+      pricing: {
+        ...prev.pricing,
+        [phase]: parseFloat(value) || 0
+      }
+    }));
+  };
+
   const addReservation = () => {
     setFormData(prev => ({
       ...prev,
@@ -298,7 +355,38 @@ const ProjectForm = () => {
   };
 
   const handleConvertToFinal = () => {
-    convertToFinalMutation.mutate(formData);
+    // Ustaw domyślne wartości na podstawie notatek konsultacyjnych
+    setConvertData(prev => ({
+      ...prev,
+      description: formData.consultationNotes || '',
+      mainBenefit: 'Analiza potrzeb klienta',
+      projectManager: {
+        ...prev.projectManager,
+        name: 'Jakub Czajka',
+        email: 'jakub.czajka@soft-synergy.com',
+        phone: '+48 793 868 886',
+        description: 'Z ponad 8-letnim doświadczeniem w prowadzeniu złożonych projektów IT, wierzę w transparentną komunikację i partnerskie relacje. Moim zadaniem jest nie tylko nadzór nad harmonogramem, ale przede wszystkim zapewnienie, że finalny produkt w 100% odpowiada Państwa wizji i celom biznesowym. Będę Państwa głównym punktem kontaktowym na każdym etapie współpracy.'
+      }
+    }));
+    setShowConvertModal(true);
+  };
+
+  const handleConvertSubmit = () => {
+    const totalPrice = convertData.pricing.phase1 + convertData.pricing.phase2 + convertData.pricing.phase3 + convertData.pricing.phase4;
+    const validModules = convertData.modules.filter(module => module.name && module.description);
+    
+    const submitData = {
+      ...formData,
+      ...convertData,
+      offerType: 'final',
+      modules: validModules.length > 0 ? validModules : [{ name: 'Moduł przykładowy', description: 'Opis przykładowego modułu', color: 'blue' }],
+      pricing: {
+        ...convertData.pricing,
+        total: totalPrice
+      }
+    };
+    
+    convertToFinalMutation.mutate(submitData);
   };
 
   const totalPrice = formData.pricing.phase1 + formData.pricing.phase2 + formData.pricing.phase3 + formData.pricing.phase4;
@@ -970,6 +1058,170 @@ const ProjectForm = () => {
           </button>
         </div>
       </form>
+
+      {/* Modal konwersji do oferty finalnej */}
+      {showConvertModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Przekształć w standardową ofertę</h2>
+                <button
+                  onClick={() => setShowConvertModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Opis projektu */}
+                <div>
+                  <label className="form-label">Opis projektu *</label>
+                  <textarea
+                    value={convertData.description}
+                    onChange={(e) => handleConvertDataChange('description', e.target.value)}
+                    required
+                    rows={4}
+                    className="input-field"
+                    placeholder="Szczegółowy opis projektu..."
+                  />
+                </div>
+
+                {/* Główna korzyść */}
+                <div>
+                  <label className="form-label">Główna korzyść biznesowa *</label>
+                  <input
+                    type="text"
+                    value={convertData.mainBenefit}
+                    onChange={(e) => handleConvertDataChange('mainBenefit', e.target.value)}
+                    required
+                    className="input-field"
+                    placeholder="np. cyfryzację kluczowych procesów sprzedażowych"
+                  />
+                </div>
+
+                {/* Project Manager */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="form-label">Imię i nazwisko *</label>
+                    <input
+                      type="text"
+                      value={convertData.projectManager.name}
+                      onChange={(e) => handleConvertManagerChange('name', e.target.value)}
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="form-label">Email *</label>
+                    <input
+                      type="email"
+                      value={convertData.projectManager.email}
+                      onChange={(e) => handleConvertManagerChange('email', e.target.value)}
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="form-label">Telefon *</label>
+                    <input
+                      type="tel"
+                      value={convertData.projectManager.phone}
+                      onChange={(e) => handleConvertManagerChange('phone', e.target.value)}
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                {/* Cennik */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Cennik</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <label className="form-label">Faza I</label>
+                      <input
+                        type="number"
+                        value={convertData.pricing.phase1}
+                        onChange={(e) => handleConvertPricingChange('phase1', e.target.value)}
+                        className="input-field"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="form-label">Faza II</label>
+                      <input
+                        type="number"
+                        value={convertData.pricing.phase2}
+                        onChange={(e) => handleConvertPricingChange('phase2', e.target.value)}
+                        className="input-field"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="form-label">Faza III</label>
+                      <input
+                        type="number"
+                        value={convertData.pricing.phase3}
+                        onChange={(e) => handleConvertPricingChange('phase3', e.target.value)}
+                        className="input-field"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="form-label">Faza IV</label>
+                      <input
+                        type="number"
+                        value={convertData.pricing.phase4}
+                        onChange={(e) => handleConvertPricingChange('phase4', e.target.value)}
+                        className="input-field"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-medium text-gray-900">Razem (netto)</span>
+                      <span className="text-xl font-bold text-primary-600">
+                        {new Intl.NumberFormat('pl-PL', {
+                          style: 'currency',
+                          currency: 'PLN'
+                        }).format(convertData.pricing.phase1 + convertData.pricing.phase2 + convertData.pricing.phase3 + convertData.pricing.phase4)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Przyciski */}
+                <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <button
+                    onClick={() => setShowConvertModal(false)}
+                    className="btn-secondary"
+                  >
+                    Anuluj
+                  </button>
+                  <button
+                    onClick={handleConvertSubmit}
+                    disabled={convertToFinalMutation.isLoading || !convertData.description || !convertData.mainBenefit || !convertData.projectManager.name || !convertData.projectManager.email || !convertData.projectManager.phone}
+                    className="btn-primary"
+                  >
+                    {convertToFinalMutation.isLoading ? 'Przekształcam...' : 'Przekształć w ofertę finalną'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
