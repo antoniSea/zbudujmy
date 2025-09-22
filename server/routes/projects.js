@@ -142,6 +142,11 @@ router.put('/:id', [
       return res.status(403).json({ message: 'Brak uprawnień do edycji tego projektu' });
     }
 
+    // Prevent manual change to accepted status; must go via contract generation
+    if (req.body.status === 'accepted') {
+      delete req.body.status;
+    }
+
     Object.assign(project, req.body);
     await project.save();
 

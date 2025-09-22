@@ -52,6 +52,16 @@ const Projects = () => {
     }
   };
 
+  const generateContract = async (projectId) => {
+    try {
+      await offersAPI.generateContract(projectId);
+      toast.success('Umowa została wygenerowana, status ustawiono na zaakceptowany!');
+      refetch();
+    } catch (error) {
+      toast.error('Błąd podczas generowania umowy');
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       draft: { label: 'Szkic', color: 'bg-gray-100 text-gray-800' },
@@ -225,6 +235,25 @@ const Projects = () => {
                     onClick={() => generateOffer(project._id)}
                     className="p-2 text-gray-400 hover:text-blue-600"
                     title="Generuj ofertę"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </button>
+                )}
+                {project.contractPdfUrl ? (
+                  <a
+                    href={`https:///oferty.soft-synergy.com${project.contractPdfUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 text-gray-400 hover:text-emerald-600"
+                    title="Pobierz umowę"
+                  >
+                    <Download className="h-4 w-4" />
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => generateContract(project._id)}
+                    className="p-2 text-gray-400 hover:text-emerald-600"
+                    title="Wygeneruj umowę"
                   >
                     <FileText className="h-4 w-4" />
                   </button>

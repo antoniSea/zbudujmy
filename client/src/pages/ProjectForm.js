@@ -104,6 +104,15 @@ const ProjectForm = () => {
     }
   });
 
+  const generateContractMutation = useMutation(offersAPI.generateContract, {
+    onSuccess: () => {
+      toast.success('Umowa została wygenerowana, status ustawiono na zaakceptowany!');
+      queryClient.invalidateQueries(['project', id]);
+      queryClient.invalidateQueries('projects');
+    },
+    onError: () => toast.error('Błąd podczas generowania umowy')
+  });
+
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [convertData, setConvertData] = useState({
     description: '',
@@ -448,6 +457,15 @@ const ProjectForm = () => {
                   <FileText className="h-4 w-4 mr-2" />
                   Generuj ofertę
                 </button>
+              <button
+                onClick={() => generateContractMutation.mutate(id)}
+                disabled={generateContractMutation.isLoading}
+                className="btn-secondary flex items-center"
+                title="Wygeneruj umowę i ustaw status na zaakceptowany"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Wygeneruj umowę
+              </button>
               </>
             )}
           </div>
@@ -476,16 +494,24 @@ const ProjectForm = () => {
               <label className="form-label">Status</label>
               <select
                 name="status"
-                value={formData.status}
-                onChange={handleChange}
+                value={formData.status === 'accepted' ? 'accepted' : formData.status}
+                onChange={(e) => {
+                  // Prevent setting to accepted manually
+                  const value = e.target.value === 'accepted' ? formData.status : e.target.value;
+                  handleChange({ target: { name: 'status', value } });
+                }}
                 className="input-field"
               >
                 <option value="draft">Szkic</option>
                 <option value="active">Aktywny</option>
-                <option value="accepted">Zaakceptowany</option>
+                {/* accepted removed from manual selection */}
                 <option value="completed">Zakończony</option>
                 <option value="cancelled">Anulowany</option>
+                {formData.status === 'accepted' && (
+                  <option value="accepted" disabled>Zaakceptowany (przez wygenerowanie umowy)</option>
+                )}
               </select>
+              <p className="text-xs text-gray-500 mt-1">Status "Zaakceptowany" ustawia się automatycznie po wygenerowaniu umowy.</p>
             </div>
             <div>
               <label className="form-label">Priorytet</label>

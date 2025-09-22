@@ -82,5 +82,6 @@ export const portfolioAPI = {
 export const offersAPI = {
   generate: (projectId) => api.post(`/api/offers/generate/${projectId}`).then(res => res.data),
   preview: (projectId) => api.get(`/api/offers/preview/${projectId}`).then(res => res.data),
+  generateContract: (projectId) => api.post(`/api/offers/generate-contract/${projectId}`).then(res => res.data),
 
 }; 

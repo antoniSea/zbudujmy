@@ -310,3 +310,94 @@ router.get('/professional-url/:projectId', auth, async (req, res) => {
 });
 
 module.exports = router;
+ 
+// Generate contract PDF and mark project as accepted
+router.post('/generate-contract/:projectId', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId)
+      .populate('createdBy', 'firstName lastName email');
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    // Create generated-offers directory if it doesn't exist
+    const outputDir = path.join(__dirname, '../generated-offers');
+    await fs.mkdir(outputDir, { recursive: true });
+
+    // Clean old contract PDFs for this project
+    try {
+      const existingFiles = await fs.readdir(outputDir);
+      const projectFiles = existingFiles.filter(file => file.startsWith(`contract-${project._id}-`) && file.endsWith('.pdf'));
+      for (const oldFile of projectFiles) {
+        await fs.unlink(path.join(outputDir, oldFile));
+      }
+    } catch (e) {
+      console.error('Contract cleanup error:', e);
+    }
+
+    // Generate simple contract PDF
+    const { jsPDF } = require('jspdf');
+    const doc = new jsPDF();
+
+    const lines = [];
+    lines.push('Umowa o Wykonanie Usług IT');
+    lines.push('');
+    lines.push(`Data: ${new Date().toLocaleDateString('pl-PL')}`);
+    lines.push(`Numer oferty: ${project.offerNumber || '-'}`);
+    lines.push('');
+    lines.push('Strony umowy:');
+    lines.push(`1) Soft Synergy (Wykonawca)`);
+    lines.push(`2) ${project.clientName} (Zamawiający)`);
+    lines.push('');
+    lines.push('Przedmiot umowy:');
+    lines.push(`${project.name} — ${project.mainBenefit || ''}`);
+    lines.push('');
+    lines.push('Zakres prac:');
+    if (Array.isArray(project.modules) && project.modules.length) {
+      project.modules.forEach((m, idx) => lines.push(`- ${idx + 1}. ${m.name}: ${m.description}`));
+    } else {
+      lines.push('- Zakres zgodnie z ofertą');
+    }
+    lines.push('');
+    lines.push('Wynagrodzenie:');
+    const total = project?.pricing?.total || 0;
+    lines.push(`Łączna kwota netto: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(total)}`);
+    lines.push('Warunki płatności:');
+    lines.push(project.customPaymentTerms || '10% zaliczki po podpisaniu umowy, 90% po odbiorze.');
+    lines.push('');
+    lines.push('Postanowienia końcowe:');
+    lines.push('Szczegóły współpracy zgodnie z wygenerowaną ofertą finalną.');
+    lines.push('Podpisy stron dostępne w dalszej korespondencji.');
+
+    doc.setFontSize(12);
+    const split = doc.splitTextToSize(lines.join('\n'), 180);
+    doc.text(split, 15, 20);
+
+    const pdfBuffer = doc.output('arraybuffer');
+    const pdfFileName = `contract-${project._id}-${Date.now()}.pdf`;
+    const pdfPath = path.join(outputDir, pdfFileName);
+    await fs.writeFile(pdfPath, Buffer.from(pdfBuffer));
+
+    // Save on project and mark accepted
+    project.contractPdfUrl = `/generated-offers/${pdfFileName}`;
+    project.status = 'accepted';
+    await project.save();
+
+    // Response with URLs
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
+    return res.json({
+      message: 'Umowa została wygenerowana, status ustawiono na zaakceptowany',
+      contractPdfUrl: project.contractPdfUrl,
+      project
+    });
+  } catch (error) {
+    console.error('Generate contract error:', error);
+    return res.status(500).json({ message: 'Błąd serwera podczas generowania umowy' });
+  }
+});
