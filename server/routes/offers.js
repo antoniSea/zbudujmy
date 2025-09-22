@@ -413,21 +413,35 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         const modules = Array.isArray(project.modules) && project.modules.length ? project.modules.map(m => `${m.name}: ${m.description}`) : ['Zakres zgodnie z ofertą'];
         bulletList(modules);
 
-        // §3
+        // §3 – Harmonogram z danych projektu
         sectionHeader('§3. Harmonogram i czas realizacji');
-        bulletList([
-          'Czas realizacji: do 17 dni roboczych od rozpoczęcia prac.',
-          'Prace rozpoczną się w ciągu 3 dni roboczych od odesłania podpisanej umowy.'
-        ]);
+        const timelineBullets = [];
+        if (project.timeline?.phase1) timelineBullets.push(`${project.timeline.phase1.name}: ${project.timeline.phase1.duration}`);
+        if (project.timeline?.phase2) timelineBullets.push(`${project.timeline.phase2.name}: ${project.timeline.phase2.duration}`);
+        if (project.timeline?.phase3) timelineBullets.push(`${project.timeline.phase3.name}: ${project.timeline.phase3.duration}`);
+        if (project.timeline?.phase4) timelineBullets.push(`${project.timeline.phase4.name}: ${project.timeline.phase4.duration}`);
+        if (timelineBullets.length) {
+          bulletList(timelineBullets);
+        }
+        bulletList(['Prace rozpoczną się w ciągu 3 dni roboczych od odesłania podpisanej umowy.']);
 
-        // §4
+        // §4 – Wynagrodzenie i płatności dynamicznie
         sectionHeader('§4. Wynagrodzenie i płatności');
         const total = currency(project?.pricing?.total || 0);
         doc.font('Regular').fontSize(11).text(`Łączne wynagrodzenie za realizację prac wynosi ${total} netto.`);
         doc.moveDown(0.2);
-        doc.text('Zamawiający zobowiązuje się do zapłaty w dwóch transzach:');
-        doc.text(`• 2 000,00 zł netto – po przeprowadzeniu optymalizacji sklepu,`, { indent: 14 });
-        doc.text(`• 4 500,00 zł netto – po wdrożeniu integracji z Allegro`, { indent: 14 });
+        const paymentLines = (project.customPaymentTerms && project.customPaymentTerms.trim().length)
+          ? project.customPaymentTerms.split(/\n+/)
+          : [
+              `Faza I: ${currency(project?.pricing?.phase1 || 0)}`,
+              `Faza II: ${currency(project?.pricing?.phase2 || 0)}`,
+              `Faza III: ${currency(project?.pricing?.phase3 || 0)}`,
+              `Faza IV: ${currency(project?.pricing?.phase4 || 0)}`
+            ].filter(line => !line.endsWith('0,00 zł') && !line.endsWith('0,00 zł'));
+        if (paymentLines.length) {
+          doc.text('Warunki płatności:');
+          paymentLines.forEach(t => doc.text(`• ${t}`, { indent: 14 }));
+        }
         doc.moveDown(0.2);
         doc.text('Faktury VAT za powyższe kwoty wystawi firma:');
         doc.moveDown(0.2);
