@@ -368,11 +368,25 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         // Parties
         doc.moveDown(0.8);
         doc.fillColor('#000').font('Bold').fontSize(12).text('Jakub Czajka');
-        doc.font('Regular').fontSize(11).text('działający w ramach marki Soft Synergy');
+        doc.font('Regular').fontSize(11).text('zamieszkały w Zielonej Górze na ulicy Rydza-Śmigłego 20/9 65-610,');
+        doc.text('identyfikującym się dowodem osobistym o numerze seryjnym DAJ 798974 oraz o numerze PESEL 07302001359,');
+        doc.text('działający w ramach marki Soft Synergy');
         doc.moveDown(0.6);
         doc.text('a');
         doc.moveDown(0.6);
-        doc.font('Bold').text(project.clientName || '[Dane Klienta]');
+        doc.font('Bold').text('[Dane Klienta]');
+        // Dotted area for client data input
+        const startX = doc.page.margins.left;
+        let y = doc.y + 6;
+        const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        doc.moveTo(startX, y).lineTo(startX + width, y).dash(3, { space: 3 }).strokeColor('#999').stroke();
+        y += 14;
+        doc.moveTo(startX, y).lineTo(startX + width, y).dash(3, { space: 3 }).stroke();
+        y += 14;
+        doc.moveTo(startX, y).lineTo(startX + width, y).dash(3, { space: 3 }).stroke();
+        doc.undash();
+        doc.moveDown(1);
+        doc.font('Regular').text('zwana dalej „Zamawiającym”');
 
         // Rule
         doc.moveDown(0.6);
@@ -411,11 +425,21 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         const total = currency(project?.pricing?.total || 0);
         doc.font('Regular').fontSize(11).text(`Łączne wynagrodzenie za realizację prac wynosi ${total} netto.`);
         doc.moveDown(0.2);
-        doc.text('Warunki płatności:');
-        const terms = (project.customPaymentTerms || '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.').split(/\n+/);
-        terms.forEach(t => doc.text(`• ${t}`, { indent: 14 }));
+        doc.text('Zamawiający zobowiązuje się do zapłaty w dwóch transzach:');
+        doc.text(`• 2 000,00 zł netto – po przeprowadzeniu optymalizacji sklepu,`, { indent: 14 });
+        doc.text(`• 4 500,00 zł netto – po wdrożeniu integracji z Allegro`, { indent: 14 });
         doc.moveDown(0.2);
-        doc.text('Faktury VAT za powyższe kwoty wystawi firma: FUNDACJA AIP');
+        doc.text('Faktury VAT za powyższe kwoty wystawi firma:');
+        doc.moveDown(0.2);
+        doc.font('Bold').text('FUNDACJA AIP');
+        doc.font('Regular').text('NIP: 5242495143');
+        doc.text('ul. ALEJA KSIĘCIA JÓZEFA PONIATOWSKIEGO 1/ — 03-901');
+        doc.text('WARSZAWA MAZOWIECKIE');
+        doc.text('email: jakub.czajka@soft-synergy.com');
+        doc.text('Numer telefonu: +48 793 868 886');
+        doc.text('jako podmiot świadczący usługę na rzecz Wykonawcy.');
+        doc.moveDown(0.2);
+        doc.text('Płatność faktur będzie traktowana jako spełnienie zobowiązania wobec Wykonawcy.');
 
         // §5
         sectionHeader('§5. Zwrot zaliczki i odstąpienie');
