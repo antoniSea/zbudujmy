@@ -27,11 +27,15 @@ const projectSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true
+    required: function() {
+      return this.offerType === 'final';
+    }
   },
   mainBenefit: {
     type: String,
-    required: true,
+    required: function() {
+      return this.offerType === 'final';
+    },
     trim: true
   },
   modules: [{
@@ -85,7 +89,9 @@ const projectSchema = new mongoose.Schema({
   projectManager: {
     name: {
       type: String,
-      required: true,
+      required: function() {
+        return this.offerType === 'final';
+      },
       trim: true
     },
     position: {
@@ -94,12 +100,16 @@ const projectSchema = new mongoose.Schema({
     },
     email: {
       type: String,
-      required: true,
+      required: function() {
+        return this.offerType === 'final';
+      },
       trim: true
     },
     phone: {
       type: String,
-      required: true,
+      required: function() {
+        return this.offerType === 'final';
+      },
       trim: true
     },
     avatar: {

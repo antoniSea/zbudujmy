@@ -71,12 +71,12 @@ router.post('/', [
   body('clientName').trim().isLength({ min: 2 }),
   body('clientContact').trim().isLength({ min: 2 }),
   body('clientEmail').optional({ checkFalsy: true }).isEmail(),
-  body('description').trim().isLength({ min: 3 }),
-  body('mainBenefit').trim().isLength({ min: 3 }),
-  body('projectManager.name').trim().isLength({ min: 2 }),
-  body('projectManager.email').isEmail(),
-  body('projectManager.phone').trim().isLength({ min: 6 }),
-  body('pricing.total').isNumeric().toFloat()
+  body('description').if(body('offerType').equals('final')).trim().isLength({ min: 3 }),
+  body('mainBenefit').if(body('offerType').equals('final')).trim().isLength({ min: 3 }),
+  body('projectManager.name').if(body('offerType').equals('final')).trim().isLength({ min: 2 }),
+  body('projectManager.email').if(body('offerType').equals('final')).isEmail(),
+  body('projectManager.phone').if(body('offerType').equals('final')).trim().isLength({ min: 6 }),
+  body('pricing.total').if(body('offerType').equals('final')).isNumeric().toFloat()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -115,12 +115,12 @@ router.put('/:id', [
   body('clientName').trim().isLength({ min: 2 }),
   body('clientContact').trim().isLength({ min: 2 }),
   body('clientEmail').optional({ checkFalsy: true }).isEmail(),
-  body('description').trim().isLength({ min: 3 }),
-  body('mainBenefit').trim().isLength({ min: 3 }),
-  body('projectManager.name').trim().isLength({ min: 2 }),
-  body('projectManager.email').isEmail(),
-  body('projectManager.phone').trim().isLength({ min: 6 }),
-  body('pricing.total').isNumeric().toFloat()
+  body('description').if(body('offerType').equals('final')).trim().isLength({ min: 3 }),
+  body('mainBenefit').if(body('offerType').equals('final')).trim().isLength({ min: 3 }),
+  body('projectManager.name').if(body('offerType').equals('final')).trim().isLength({ min: 2 }),
+  body('projectManager.email').if(body('offerType').equals('final')).isEmail(),
+  body('projectManager.phone').if(body('offerType').equals('final')).trim().isLength({ min: 6 }),
+  body('pricing.total').if(body('offerType').equals('final')).isNumeric().toFloat()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

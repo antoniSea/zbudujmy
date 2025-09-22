@@ -224,26 +224,67 @@ const ProjectForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Oblicz total price
-    const totalPrice = formData.pricing.phase1 + formData.pricing.phase2 + formData.pricing.phase3 + formData.pricing.phase4;
+    // Przygotuj dane w zależności od typu oferty
+    let submitData;
     
-    // Filtruj tylko wypełnione moduły
-    const validModules = formData.modules.filter(module => module.name && module.description);
-    
-    // Przygotuj dane z total price i poprawionymi modułami
-    const submitData = {
-      ...formData,
-      modules: validModules.length > 0 ? validModules : [{ name: 'Moduł przykładowy', description: 'Opis przykładowego modułu', color: 'blue' }],
-      pricing: {
-        ...formData.pricing,
-        total: totalPrice
-      },
-      // Obsługa widełek cenowych - jeśli są ustawione, używamy ich zamiast total
-      priceRange: {
-        min: formData.priceRange.min || null,
-        max: formData.priceRange.max || null
-      }
-    };
+    if (formData.offerType === 'preliminary') {
+      // Dla ofert wstępnych wysyłamy tylko podstawowe dane
+      submitData = {
+        name: formData.name,
+        clientName: formData.clientName,
+        clientContact: formData.clientContact,
+        clientEmail: formData.clientEmail,
+        clientPhone: formData.clientPhone,
+        offerType: formData.offerType,
+        consultationNotes: formData.consultationNotes,
+        status: formData.status,
+        priority: formData.priority,
+        // Domyślne wartości dla pól wymaganych przez model
+        description: formData.consultationNotes || 'Konsultacja wstępna',
+        mainBenefit: 'Analiza potrzeb klienta',
+        projectManager: {
+          name: 'Jakub Czajka',
+          position: 'Senior Project Manager',
+          email: 'jakub.czajka@soft-synergy.com',
+          phone: '+48 793 868 886',
+          description: 'Z ponad 8-letnim doświadczeniem w prowadzeniu złożonych projektów IT...'
+        },
+        modules: [{ name: 'Konsultacja', description: 'Analiza potrzeb i wymagań', color: 'blue' }],
+        timeline: {
+          phase1: { name: 'Konsultacja', duration: 'Tydzień 1' },
+          phase2: { name: 'Analiza', duration: 'Tydzień 2' },
+          phase3: { name: 'Prezentacja', duration: 'Tydzień 3' },
+          phase4: { name: 'Finalizacja', duration: 'Tydzień 4' }
+        },
+        pricing: {
+          phase1: 0,
+          phase2: 0,
+          phase3: 0,
+          phase4: 0,
+          total: 0
+        },
+        priceRange: { min: null, max: null },
+        customReservations: [],
+        customPaymentTerms: 'Do ustalenia po konsultacji'
+      };
+    } else {
+      // Dla ofert finalnych wysyłamy wszystkie dane
+      const totalPrice = formData.pricing.phase1 + formData.pricing.phase2 + formData.pricing.phase3 + formData.pricing.phase4;
+      const validModules = formData.modules.filter(module => module.name && module.description);
+      
+      submitData = {
+        ...formData,
+        modules: validModules.length > 0 ? validModules : [{ name: 'Moduł przykładowy', description: 'Opis przykładowego modułu', color: 'blue' }],
+        pricing: {
+          ...formData.pricing,
+          total: totalPrice
+        },
+        priceRange: {
+          min: formData.priceRange.min || null,
+          max: formData.priceRange.max || null
+        }
+      };
+    }
     
     if (isEditing) {
       updateMutation.mutate(submitData);
