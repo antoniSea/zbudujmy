@@ -13,6 +13,9 @@
 - ✅ Dodano specjalną sekcję w szablonie HTML dla ofert wstępnych
 - ✅ Zmodyfikowano sekcję "Kolejne Kroki" dla ofert konsultacyjnych
 - ✅ Dostosowano przycisk akceptacji dla ofert wstępnych
+- ✅ **NAPRAWIONO**: Walidacja backendowa - pola `description`, `mainBenefit`, `projectManager` nie są wymagane dla ofert wstępnych
+- ✅ **NAPRAWIONO**: Model Project - pola wymagane tylko dla ofert finalnych
+- ✅ **NAPRAWIONO**: Logika submit w formularzu - wysyła domyślne wartości dla ofert wstępnych
 
 ### 2. Widełki cenowe
 - ✅ Dodano nowe pole `priceRange` do modelu Project z polami `min` i `max`
@@ -101,5 +104,18 @@ Utworzono interaktywne demo (`demo-new-features.html`) które pozwala:
 - Ładować przykładowe dane
 - Zobaczyć różnice między ofertą wstępną a finalną
 
+## 🔧 Naprawione problemy
+
+### Problem z walidacją ofert wstępnych
+**Problem**: Nie można było utworzyć oferty wstępnej - backend wymagał wszystkich pól (`description`, `mainBenefit`, `projectManager`).
+
+**Rozwiązanie**:
+1. **Backend walidacja**: Zaktualizowano `server/routes/projects.js` - pola wymagane tylko dla `offerType === 'final'`
+2. **Model MongoDB**: Zaktualizowano `server/models/Project.js` - pola `required` z funkcją warunkową
+3. **Frontend submit**: Zaktualizowano logikę w `client/src/pages/ProjectForm.js` - wysyła domyślne wartości dla ofert wstępnych
+
+**Test**: ✅ Oferta wstępna akceptuje tylko podstawowe dane klienta
+**Test**: ✅ Oferta finalna wymaga wszystkich pól
+
 ## ✅ Status
-Wszystkie funkcjonalności zostały zaimplementowane i są gotowe do użycia. Kod nie zawiera błędów lintera i jest zgodny z istniejącą architekturą aplikacji.
+Wszystkie funkcjonalności zostały zaimplementowane i są gotowe do użycia. Kod nie zawiera błędów lintera i jest zgodny z istniejącą architekturą aplikacji. Problem z walidacją został naprawiony.
