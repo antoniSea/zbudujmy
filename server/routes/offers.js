@@ -336,51 +336,118 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
       console.error('Contract cleanup error:', e);
     }
 
-    // Prepare HTML via Handlebars template
-    const templatePath = path.join(__dirname, '../templates/contract-template.html');
-    const templateContent = await fs.readFile(templatePath, 'utf8');
-    const template = handlebars.compile(templateContent);
-
+    // Generate PDF with pdfkit (works on Linux servers, no headless browser)
+    const PDFDocument = require('pdfkit');
     const currency = (n) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(n || 0);
-    const paymentTermsHtml = (project.customPaymentTerms || '').replace(/\n/g, '<br/>');
-    const timelineTotal = `${project.timeline?.phase1?.duration || ''}${project.timeline?.phase2?.duration ? ', ' + project.timeline.phase2.duration : ''}${project.timeline?.phase3?.duration ? ', ' + project.timeline.phase3.duration : ''}${project.timeline?.phase4?.duration ? ', ' + project.timeline.phase4.duration : ''}`.trim();
-
-    const html = template({
-      projectName: project.name,
-      clientName: project.clientName,
-      clientEmail: project.clientEmail,
-      clientPhone: project.clientPhone,
-      clientAddress: project.clientAddress || '',
-      clientNip: project.clientNip || '',
-      offerDate: new Date().toLocaleDateString('pl-PL'),
-      contractDate: new Date().toLocaleDateString('pl-PL'),
-      modules: Array.isArray(project.modules) && project.modules.length ? project.modules : [{ name: 'Zakres wg oferty', description: 'Szczegóły w załączniku nr 1' }],
-      timelineTotal: timelineTotal || 'ustalony harmonogram',
-      totalFormatted: currency(project?.pricing?.total || 0),
-      paymentTermsHtml,
-      contractor: {
-        name: 'Jakub Czajka',
-        nip: '5242495143',
-        address: 'Aleja Księcia Józefa Poniatowskiego 1, 03-901 Warszawa',
-        email: 'jakub.czajka@soft-synergy.com',
-        phone: '+48 793 868 886',
-        invoiceEntity: 'FUNDACJA AIP',
-        invoiceDetails: 'ul. Aleja Księcia Józefa Poniatowskiego 1, 03-901 Warszawa, NIP: 5242495143',
-        signatory: 'Jakub Czajka'
-      }
-    });
-
-    // Render PDF via Puppeteer for proper layout
-    const puppeteer = require('puppeteer');
-    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' } });
-    await browser.close();
-
     const pdfFileName = `contract-${project._id}-${Date.now()}.pdf`;
     const pdfPath = path.join(outputDir, pdfFileName);
-    await fs.writeFile(pdfPath, pdfBuffer);
+
+    await new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margins: { top: 56, left: 56, right: 56, bottom: 56 } });
+        const stream = require('fs').createWriteStream(pdfPath);
+        doc.pipe(stream);
+
+        // Title
+        doc.font('Helvetica-Bold').fontSize(18).text(`Umowa realizacji ${project.name}`, { align: 'left' });
+        doc.moveDown(0.5);
+        doc.font('Helvetica').fontSize(11).fillColor('#333').text(`zawarta w dniu ${new Date().toLocaleDateString('pl-PL')} pomiędzy:`);
+
+        // Parties
+        doc.moveDown(0.8);
+        doc.fillColor('#000').font('Helvetica-Bold').fontSize(12).text('Jakub Czajka');
+        doc.font('Helvetica').fontSize(11).text('działający w ramach marki Soft Synergy');
+        doc.moveDown(0.6);
+        doc.text('a');
+        doc.moveDown(0.6);
+        doc.font('Helvetica-Bold').text(project.clientName || '[Dane Klienta]');
+
+        // Rule
+        doc.moveDown(0.6);
+        doc.strokeColor('#999').lineWidth(2).moveTo(doc.page.margins.left, doc.y).lineTo(doc.page.width - doc.page.margins.right, doc.y).stroke();
+
+        const sectionHeader = (title) => {
+          doc.moveDown(1);
+          doc.font('Helvetica-Bold').fontSize(13).fillColor('#000').text(title);
+        };
+        const bulletList = (items) => {
+          doc.moveDown(0.2);
+          doc.font('Helvetica').fontSize(11).fillColor('#000');
+          items.forEach((t, idx) => {
+            doc.text(`${idx + 1}. ${t}`, { indent: 14 });
+          });
+        };
+
+        // §1
+        sectionHeader('§1. Przedmiot umowy');
+        doc.font('Helvetica').fontSize(11).text(`Wykonawca zobowiązuje się do realizacji projektu "${project.name}" zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia ${new Date().toLocaleDateString('pl-PL')}).`);
+
+        // §2
+        sectionHeader('§2. Zakres prac');
+        const modules = Array.isArray(project.modules) && project.modules.length ? project.modules.map(m => `${m.name}: ${m.description}`) : ['Zakres zgodnie z ofertą'];
+        bulletList(modules);
+
+        // §3
+        sectionHeader('§3. Harmonogram i czas realizacji');
+        bulletList([
+          'Czas realizacji: do 17 dni roboczych od rozpoczęcia prac.',
+          'Prace rozpoczną się w ciągu 3 dni roboczych od odesłania podpisanej umowy.'
+        ]);
+
+        // §4
+        sectionHeader('§4. Wynagrodzenie i płatności');
+        const total = currency(project?.pricing?.total || 0);
+        doc.font('Helvetica').fontSize(11).text(`Łączne wynagrodzenie za realizację prac wynosi ${total} netto.`);
+        doc.moveDown(0.2);
+        doc.text('Warunki płatności:');
+        const terms = (project.customPaymentTerms || '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.').split(/\n+/);
+        terms.forEach(t => doc.text(`• ${t}`, { indent: 14 }));
+        doc.moveDown(0.2);
+        doc.text('Faktury VAT za powyższe kwoty wystawi firma: FUNDACJA AIP');
+
+        // §5
+        sectionHeader('§5. Zwrot zaliczki i odstąpienie');
+        bulletList([
+          'W przypadku niemożliwości realizacji projektu z przyczyn niezależnych od Wykonawcy, Wykonawca może odstąpić od umowy i zobowiązuje się do pełnego zwrotu zaliczki w terminie do 5 dni roboczych.',
+          'W takim przypadku żadna ze stron nie będzie dochodziła dalszych roszczeń.'
+        ]);
+
+        // §6
+        sectionHeader('§6. Odbiór i gwarancja');
+        bulletList([
+          'Zamawiający zobowiązuje się do odbioru prac po zakończeniu realizacji.',
+          'Błędy zgłoszone w okresie 3 miesięcy od odbioru będą poprawiane nieodpłatnie.',
+          'Gwarancja nie obejmuje zmian funkcjonalnych ani rozbudowy.'
+        ]);
+
+        // §7
+        sectionHeader('§7. Postanowienia końcowe');
+        bulletList([
+          'Strony dopuszczają kontakt i ustalenia drogą mailową jako formę wiążącą.',
+          'Spory będą rozstrzygane polubownie, a w razie potrzeby przez sąd właściwy dla miejsca zamieszkania Wykonawcy.',
+          'W sprawach nieuregulowanych stosuje się przepisy Kodeksu cywilnego.'
+        ]);
+
+        // Signatures
+        doc.moveDown(2);
+        const yStart = doc.y;
+        const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+        const colWidth = pageWidth / 2 - 10;
+        // Left
+        doc.moveTo(doc.page.margins.left, yStart + 30).lineTo(doc.page.margins.left + colWidth, yStart + 30).strokeColor('#000').lineWidth(1).stroke();
+        doc.fontSize(10).text('Zamawiający', doc.page.margins.left, yStart + 35, { width: colWidth, align: 'left' });
+        // Right
+        const rightX = doc.page.margins.left + colWidth + 20;
+        doc.moveTo(rightX, yStart + 30).lineTo(rightX + colWidth, yStart + 30).stroke();
+        doc.text('Jakub Czajka\ndziałający w ramach marki Soft Synergy', rightX, yStart + 35, { width: colWidth, align: 'right' });
+
+        doc.end();
+        stream.on('finish', resolve);
+        stream.on('error', reject);
+      } catch (e) {
+        reject(e);
+      }
+    });
 
     // Save on project and mark accepted
     project.contractPdfUrl = `/generated-offers/${pdfFileName}`;
