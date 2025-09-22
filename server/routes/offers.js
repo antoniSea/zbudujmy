@@ -311,7 +311,7 @@ router.get('/professional-url/:projectId', auth, async (req, res) => {
 
 module.exports = router;
  
-// Generate contract PDF and mark project as accepted
+// Generate contract PDF (from HTML template via Puppeteer) and mark project as accepted
 router.post('/generate-contract/:projectId', auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId)
@@ -336,48 +336,51 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
       console.error('Contract cleanup error:', e);
     }
 
-    // Generate simple contract PDF
-    const { jsPDF } = require('jspdf');
-    const doc = new jsPDF();
+    // Prepare HTML via Handlebars template
+    const templatePath = path.join(__dirname, '../templates/contract-template.html');
+    const templateContent = await fs.readFile(templatePath, 'utf8');
+    const template = handlebars.compile(templateContent);
 
-    const lines = [];
-    lines.push('Umowa o Wykonanie Usług IT');
-    lines.push('');
-    lines.push(`Data: ${new Date().toLocaleDateString('pl-PL')}`);
-    lines.push(`Numer oferty: ${project.offerNumber || '-'}`);
-    lines.push('');
-    lines.push('Strony umowy:');
-    lines.push(`1) Soft Synergy (Wykonawca)`);
-    lines.push(`2) ${project.clientName} (Zamawiający)`);
-    lines.push('');
-    lines.push('Przedmiot umowy:');
-    lines.push(`${project.name} — ${project.mainBenefit || ''}`);
-    lines.push('');
-    lines.push('Zakres prac:');
-    if (Array.isArray(project.modules) && project.modules.length) {
-      project.modules.forEach((m, idx) => lines.push(`- ${idx + 1}. ${m.name}: ${m.description}`));
-    } else {
-      lines.push('- Zakres zgodnie z ofertą');
-    }
-    lines.push('');
-    lines.push('Wynagrodzenie:');
-    const total = project?.pricing?.total || 0;
-    lines.push(`Łączna kwota netto: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(total)}`);
-    lines.push('Warunki płatności:');
-    lines.push(project.customPaymentTerms || '10% zaliczki po podpisaniu umowy, 90% po odbiorze.');
-    lines.push('');
-    lines.push('Postanowienia końcowe:');
-    lines.push('Szczegóły współpracy zgodnie z wygenerowaną ofertą finalną.');
-    lines.push('Podpisy stron dostępne w dalszej korespondencji.');
+    const currency = (n) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(n || 0);
+    const paymentTermsHtml = (project.customPaymentTerms || '').replace(/\n/g, '<br/>');
+    const timelineTotal = `${project.timeline?.phase1?.duration || ''}${project.timeline?.phase2?.duration ? ', ' + project.timeline.phase2.duration : ''}${project.timeline?.phase3?.duration ? ', ' + project.timeline.phase3.duration : ''}${project.timeline?.phase4?.duration ? ', ' + project.timeline.phase4.duration : ''}`.trim();
 
-    doc.setFontSize(12);
-    const split = doc.splitTextToSize(lines.join('\n'), 180);
-    doc.text(split, 15, 20);
+    const html = template({
+      projectName: project.name,
+      clientName: project.clientName,
+      clientEmail: project.clientEmail,
+      clientPhone: project.clientPhone,
+      clientAddress: project.clientAddress || '',
+      clientNip: project.clientNip || '',
+      offerDate: new Date().toLocaleDateString('pl-PL'),
+      contractDate: new Date().toLocaleDateString('pl-PL'),
+      modules: Array.isArray(project.modules) && project.modules.length ? project.modules : [{ name: 'Zakres wg oferty', description: 'Szczegóły w załączniku nr 1' }],
+      timelineTotal: timelineTotal || 'ustalony harmonogram',
+      totalFormatted: currency(project?.pricing?.total || 0),
+      paymentTermsHtml,
+      contractor: {
+        name: 'Jakub Czajka',
+        nip: '5242495143',
+        address: 'Aleja Księcia Józefa Poniatowskiego 1, 03-901 Warszawa',
+        email: 'jakub.czajka@soft-synergy.com',
+        phone: '+48 793 868 886',
+        invoiceEntity: 'FUNDACJA AIP',
+        invoiceDetails: 'ul. Aleja Księcia Józefa Poniatowskiego 1, 03-901 Warszawa, NIP: 5242495143',
+        signatory: 'Jakub Czajka'
+      }
+    });
 
-    const pdfBuffer = doc.output('arraybuffer');
+    // Render PDF via Puppeteer for proper layout
+    const puppeteer = require('puppeteer');
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' } });
+    await browser.close();
+
     const pdfFileName = `contract-${project._id}-${Date.now()}.pdf`;
     const pdfPath = path.join(outputDir, pdfFileName);
-    await fs.writeFile(pdfPath, Buffer.from(pdfBuffer));
+    await fs.writeFile(pdfPath, pdfBuffer);
 
     // Save on project and mark accepted
     project.contractPdfUrl = `/generated-offers/${pdfFileName}`;

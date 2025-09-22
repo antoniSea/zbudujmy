@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Umowa – {{projectName}}</title>
+  <style>
+    @page { size: A4; margin: 22mm; }
+    body { font-family: Arial, Helvetica, sans-serif; color: #111; font-size: 12pt; line-height: 1.45; }
+    h1 { font-size: 18pt; margin: 0 0 12px 0; }
+    h2 { font-size: 13pt; margin: 16px 0 8px 0; }
+    .muted { color: #333; }
+    .bold { font-weight: bold; }
+    .section { margin: 22px 0; }
+    .rule { border: 0; border-top: 2px solid #999; margin: 16px 0; }
+    ol { margin: 0; padding-left: 18px; }
+    ul { margin: 0; padding-left: 18px; }
+    .signatures { margin-top: 36px; }
+    .sig-line { margin-top: 42px; border-top: 1px solid #000; width: 70%; }
+    .cols { display: flex; gap: 24px; }
+    .col { flex: 1; }
+    .small { font-size: 10pt; }
+  </style>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:; img-src data: https:; style-src 'self' 'unsafe-inline';" />
+</head>
+<body>
+  <h1>Umowa realizacji {{projectName}}</h1>
+  <p class="muted">zawarta w dniu {{contractDate}} pomiędzy:</p>
+
+  <p class="bold">{{contractor.name}}</p>
+  <p>{{contractor.address}}</p>
+  <p>NIP: {{contractor.nip}}</p>
+  {{#if contractor.email}}<p>email: {{contractor.email}} | tel.: {{contractor.phone}}</p>{{/if}}
+  <p class="muted">działającym w ramach marki Soft Synergy</p>
+
+  <p class="muted">a</p>
+  <p class="bold">{{clientName}}</p>
+  {{#if clientAddress}}<p>{{clientAddress}}</p>{{/if}}
+  {{#if clientNip}}<p>NIP: {{clientNip}}</p>{{/if}}
+  {{#if clientEmail}}<p>email: {{clientEmail}} {{#if clientPhone}}| tel.: {{clientPhone}}{{/if}}</p>{{/if}}
+
+  <hr class="rule" />
+
+  <div class="section">
+    <h2>§1. Przedmiot umowy</h2>
+    <p>Wykonawca zobowiązuje się do realizacji projektu „{{projectName}}”, zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia {{offerDate}}) stanowiącym integralną część umowy.</p>
+  </div>
+
+  <div class="section">
+    <h2>§2. Zakres prac</h2>
+    <p>Zakres obejmuje:</p>
+    <ol>
+      {{#each modules}}
+        <li><span class="bold">{{this.name}}</span>: {{this.description}}</li>
+      {{/each}}
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>§3. Harmonogram i czas realizacji</h2>
+    <ol>
+      <li>Czas realizacji: {{timelineTotal}} od rozpoczęcia prac.</li>
+      <li>Prace rozpoczną się w terminie do 3 dni roboczych od odesłania podpisanej umowy.</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>§4. Wynagrodzenie i płatności</h2>
+    <ol>
+      <li>Łączne wynagrodzenie za realizację prac wynosi <span class="bold">{{totalFormatted}} netto</span>.</li>
+      <li>Zamawiający zobowiązuje się do zapłaty zgodnie z warunkami:<br/>{{paymentTermsHtml}}</li>
+      <li>Faktury VAT za powyższe kwoty wystawi: <span class="bold">{{contractor.invoiceEntity}}</span></li>
+      {{#if contractor.invoiceDetails}}
+      <li class="small">{{contractor.invoiceDetails}}</li>
+      {{/if}}
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>§5. Zwrot zaliczki i odstąpienie</h2>
+    <ol>
+      <li>W przypadku niemożliwości realizacji projektu z przyczyn niezależnych od Wykonawcy, Wykonawca może odstąpić od umowy i zobowiązuje się do pełnego zwrotu zaliczki w terminie do 5 dni roboczych.</li>
+      <li>W takim przypadku żadna ze stron nie będzie dochodziła dalszych roszczeń.</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>§6. Odbiór i gwarancja</h2>
+    <ol>
+      <li>Zamawiający zobowiązuje się do odbioru prac po zakończeniu realizacji.</li>
+      <li>Błędy zgłoszone w okresie 3 miesięcy od odbioru będą poprawiane nieodpłatnie.</li>
+      <li>Gwarancja nie obejmuje zmian funkcjonalnych ani rozbudowy.</li>
+    </ol>
+  </div>
+
+  <div class="section">
+    <h2>§7. Postanowienia końcowe</h2>
+    <ol>
+      <li>Strony dopuszczają kontakt i ustalenia drogą mailową jako formę wiążącą.</li>
+      <li>Spory będą rozstrzygane polubownie, a w razie potrzeby przez sąd właściwy dla miejsca zamieszkania Wykonawcy.</li>
+      <li>W sprawach nieuregulowanych stosuje się przepisy Kodeksu cywilnego.</li>
+    </ol>
+  </div>
+
+  <div class="section signatures">
+    <div class="cols">
+      <div class="col">
+        <div class="sig-line"></div>
+        <div class="small">Zamawiający</div>
+      </div>
+      <div class="col" style="text-align:right;">
+        <div class="sig-line" style="margin-left:auto;"></div>
+        <div class="small">{{contractor.signatory}}</div>
+        <div class="small">działający w ramach marki Soft Synergy</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
