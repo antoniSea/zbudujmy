@@ -4,7 +4,12 @@
 
 ### 1. Oferta wstępna / konsultacja
 - ✅ Dodano nowe pole `offerType` do modelu Project z wartościami `'final'` i `'preliminary'`
-- ✅ Zaktualizowano formularz frontendowy z selektorem typu oferty
+- ✅ Dodano pole `consultationNotes` dla notatek z konsultacji
+- ✅ Uproszczono formularz dla ofert wstępnych - tylko dane klienta i notatki
+- ✅ Ukryto sekcje: moduły, harmonogram, cennik, widełki, warunki płatności, zastrzeżenia
+- ✅ Ukryto przyciski "Podgląd" i "Generuj ofertę" dla ofert wstępnych
+- ✅ Dodano przycisk "Przekształć w standardową ofertę"
+- ✅ System follow-upów działa dla ofert wstępnych
 - ✅ Dodano specjalną sekcję w szablonie HTML dla ofert wstępnych
 - ✅ Zmodyfikowano sekcję "Kolejne Kroki" dla ofert konsultacyjnych
 - ✅ Dostosowano przycisk akceptacji dla ofert wstępnych
@@ -72,8 +77,16 @@ priceRange: {
 
 ### Tworzenie oferty wstępnej
 1. Wybierz "Oferta wstępna / Konsultacja" w typie oferty
-2. Wypełnij standardowe dane projektu
-3. Wygeneruj ofertę - będzie miała specjalny wygląd
+2. Wypełnij tylko dane klienta (nazwa firmy, osoba kontaktowa, email, telefon)
+3. Wprowadź notatki z konsultacji
+4. Zapisz - formularz będzie uproszczony bez sekcji modułów, cennika itp.
+
+### Konwersja oferty wstępnej na standardową
+1. Otwórz ofertę wstępną do edycji
+2. Kliknij "Przekształć w standardową ofertę"
+3. Formularz rozszerzy się o wszystkie sekcje (moduły, cennik, itp.)
+4. Wypełnij brakujące dane
+5. Wygeneruj standardową ofertę
 
 ### Ustawianie widełek cenowych
 1. W sekcji "Widełki cenowe" wprowadź cenę minimalną i maksymalną
@@ -84,8 +97,9 @@ priceRange: {
 Utworzono interaktywne demo (`demo-new-features.html`) które pozwala:
 - Przełączać między typami ofert
 - Ustawiać widełki cenowe
-- Podglądać jak będzie wyglądać oferta
+- Podglądać jak będzie wyglądać formularz dla każdego typu oferty
 - Ładować przykładowe dane
+- Zobaczyć różnice między ofertą wstępną a finalną
 
 ## ✅ Status
 Wszystkie funkcjonalności zostały zaimplementowane i są gotowe do użycia. Kod nie zawiera błędów lintera i jest zgodny z istniejącą architekturą aplikacji.

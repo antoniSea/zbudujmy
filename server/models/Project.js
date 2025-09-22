@@ -165,6 +165,10 @@ const projectSchema = new mongoose.Schema({
   customPaymentTerms: {
     type: String,
     default: '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.'
+  },
+  consultationNotes: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

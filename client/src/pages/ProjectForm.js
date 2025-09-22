@@ -58,7 +58,8 @@ const ProjectForm = () => {
     priority: 'normal',
     notes: [],
     customReservations: [],
-    customPaymentTerms: '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.'
+    customPaymentTerms: '10% zaliczki po podpisaniu umowy.\n90% po odbiorze końcowym projektu.',
+    consultationNotes: ''
   });
 
   const { data: project, isLoading } = useQuery(
@@ -102,6 +103,20 @@ const ProjectForm = () => {
       toast.error('Błąd podczas generowania oferty');
     }
   });
+
+  const convertToFinalMutation = useMutation(
+    (data) => projectsAPI.update(id, { ...data, offerType: 'final' }),
+    {
+      onSuccess: () => {
+        toast.success('Oferta wstępna została przekształcona w standardową ofertę!');
+        queryClient.invalidateQueries(['project', id]);
+        queryClient.invalidateQueries('projects');
+      },
+      onError: (error) => {
+        toast.error('Błąd podczas przekształcania oferty');
+      }
+    }
+  );
 
   useEffect(() => {
     if (project) {
@@ -241,6 +256,10 @@ const ProjectForm = () => {
     generateOfferMutation.mutate(id);
   };
 
+  const handleConvertToFinal = () => {
+    convertToFinalMutation.mutate(formData);
+  };
+
   const totalPrice = formData.pricing.phase1 + formData.pricing.phase2 + formData.pricing.phase3 + formData.pricing.phase4;
 
   if (isLoading) {
@@ -274,21 +293,34 @@ const ProjectForm = () => {
         
         {isEditing && (
           <div className="flex space-x-2">
-            <button
-              onClick={() => window.open(`/api/offers/preview/${id}`, '_blank')}
-              className="btn-secondary flex items-center"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Podgląd
-            </button>
-            <button
-              onClick={handleGenerateOffer}
-              disabled={generateOfferMutation.isLoading}
-              className="btn-primary flex items-center"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Generuj ofertę
-            </button>
+            {formData.offerType === 'preliminary' ? (
+              <button
+                onClick={handleConvertToFinal}
+                disabled={convertToFinalMutation.isLoading}
+                className="btn-primary flex items-center"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Przekształć w standardową ofertę
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => window.open(`/api/offers/preview/${id}`, '_blank')}
+                  className="btn-secondary flex items-center"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Podgląd
+                </button>
+                <button
+                  onClick={handleGenerateOffer}
+                  disabled={generateOfferMutation.isLoading}
+                  className="btn-primary flex items-center"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Generuj ofertę
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -414,51 +446,72 @@ const ProjectForm = () => {
           </div>
         </div>
 
-        {/* Project Description */}
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Opis projektu</h2>
-          <div className="space-y-4">
+        {/* Project Description or Consultation Notes */}
+        {formData.offerType === 'preliminary' ? (
+          <div className="card">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Notatki z konsultacji</h2>
             <div>
-              <label className="form-label">Główna korzyść biznesowa *</label>
-              <input
-                type="text"
-                name="mainBenefit"
-                value={formData.mainBenefit}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="np. cyfryzację kluczowych procesów sprzedażowych"
-              />
-            </div>
-            
-            <div>
-              <label className="form-label">Opis projektu *</label>
+              <label className="form-label">Notatki z rozmowy z klientem</label>
               <textarea
-                name="description"
-                value={formData.description}
+                name="consultationNotes"
+                value={formData.consultationNotes}
                 onChange={handleChange}
-                required
-                rows={4}
+                rows={6}
                 className="input-field"
-                placeholder="Szczegółowy opis projektu..."
+                placeholder="Wprowadź notatki z konsultacji z klientem, jego potrzeby, oczekiwania, budżet, timeline itp..."
               />
+              <p className="text-sm text-gray-500 mt-1">
+                Te notatki będą pomocne przy przekształceniu konsultacji w standardową ofertę
+              </p>
             </div>
           </div>
-        </div>
-
-        {/* Modules */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Moduły projektu</h2>
-            <button
-              type="button"
-              onClick={addModule}
-              className="btn-secondary flex items-center"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Dodaj moduł
-            </button>
+        ) : (
+          <div className="card">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Opis projektu</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="form-label">Główna korzyść biznesowa *</label>
+                <input
+                  type="text"
+                  name="mainBenefit"
+                  value={formData.mainBenefit}
+                  onChange={handleChange}
+                  required
+                  className="input-field"
+                  placeholder="np. cyfryzację kluczowych procesów sprzedażowych"
+                />
+              </div>
+              
+              <div>
+                <label className="form-label">Opis projektu *</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  required
+                  rows={4}
+                  className="input-field"
+                  placeholder="Szczegółowy opis projektu..."
+                />
+              </div>
+            </div>
           </div>
+        )}
+
+        {/* Modules - only for final offers */}
+        {formData.offerType === 'final' && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Moduły projektu</h2>
+              <button
+                type="button"
+                onClick={addModule}
+                className="btn-secondary flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Dodaj moduł
+              </button>
+            </div>
           
           <div className="space-y-4">
             {formData.modules.map((module, index) => (
@@ -503,8 +556,10 @@ const ProjectForm = () => {
             ))}
           </div>
         </div>
+        )}
 
-        {/* Timeline */}
+        {/* Timeline - only for final offers */}
+        {formData.offerType === 'final' && (
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Harmonogram projektu</h2>
           <div className="space-y-4">
@@ -601,8 +656,10 @@ const ProjectForm = () => {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Project Manager */}
+        {/* Project Manager - only for final offers */}
+        {formData.offerType === 'final' && (
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Opiekun projektu</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -654,8 +711,10 @@ const ProjectForm = () => {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Pricing */}
+        {/* Pricing - only for final offers */}
+        {formData.offerType === 'final' && (
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Cennik</h2>
           <div className="space-y-4">
@@ -718,8 +777,10 @@ const ProjectForm = () => {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Price Range */}
+        {/* Price Range - only for final offers */}
+        {formData.offerType === 'final' && (
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Widełki cenowe</h2>
           <div className="space-y-4">
@@ -776,8 +837,10 @@ const ProjectForm = () => {
             )}
           </div>
         </div>
+        )}
 
-        {/* Payment Terms */}
+        {/* Payment Terms - only for final offers */}
+        {formData.offerType === 'final' && (
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Warunki płatności</h2>
           <div className="space-y-4">
@@ -797,8 +860,10 @@ const ProjectForm = () => {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Custom Reservations */}
+        {/* Custom Reservations - only for final offers */}
+        {formData.offerType === 'final' && (
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-gray-900">Dodatkowe zastrzeżenia</h2>
@@ -838,6 +903,7 @@ const ProjectForm = () => {
             )}
           </div>
         </div>
+        )}
 
         {/* Notes */}
         {isEditing && (
