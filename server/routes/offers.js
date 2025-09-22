@@ -375,17 +375,20 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         doc.text('a');
         doc.moveDown(0.6);
         doc.font('Bold').text('[Dane Klienta]');
-        // Dotted area for client data input
+        // Dotted area for client data input (with extra spacing to avoid overlap)
         const startX = doc.page.margins.left;
-        let y = doc.y + 6;
         const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-        doc.moveTo(startX, y).lineTo(startX + width, y).dash(3, { space: 3 }).strokeColor('#999').stroke();
-        y += 14;
-        doc.moveTo(startX, y).lineTo(startX + width, y).dash(3, { space: 3 }).stroke();
-        y += 14;
-        doc.moveTo(startX, y).lineTo(startX + width, y).dash(3, { space: 3 }).stroke();
-        doc.undash();
-        doc.moveDown(1);
+        let y = doc.y + 12; // push below current text
+        const gap = 18;
+        doc.dash(3, { space: 4 }).strokeColor('#bdbdbd').lineWidth(1);
+        doc.moveTo(startX, y).lineTo(startX + width, y).stroke();
+        y += gap;
+        doc.moveTo(startX, y).lineTo(startX + width, y).stroke();
+        y += gap;
+        doc.moveTo(startX, y).lineTo(startX + width, y).stroke();
+        doc.undash().strokeColor('#000');
+        // move cursor below dotted block with safe margin
+        doc.y = y + 16;
         doc.font('Regular').text('zwana dalej „Zamawiającym”');
 
         // Rule
@@ -489,6 +492,13 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         // Right
         const rightX = doc.page.margins.left + colWidth + 20;
         doc.moveTo(rightX, yStart + 30).lineTo(rightX + colWidth, yStart + 30).stroke();
+        // Signature image
+        try {
+          const sigPath = path.join(__dirname, '../public/img/podpis-jakub-czajka.jpg');
+          doc.image(sigPath, rightX + colWidth - 140, yStart - 5, { width: 120, align: 'right' });
+        } catch (e) {
+          // ignore if image not found
+        }
         doc.font('Regular').text('Jakub Czajka\ndziałający w ramach marki Soft Synergy', rightX, yStart + 35, { width: colWidth, align: 'right' });
 
         doc.end();
