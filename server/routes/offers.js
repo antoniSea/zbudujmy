@@ -537,3 +537,68 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
     return res.status(500).json({ message: 'Błąd serwera podczas generowania umowy' });
   }
 });
+
+// Return an editable draft of the contract text before PDF generation
+router.get('/contract-draft/:projectId', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ message: 'Projekt nie został znaleziony' });
+    }
+
+    const currency = (n) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(n || 0);
+
+    const lines = [];
+    lines.push(`Umowa realizacji ${project.name}`);
+    lines.push(`zawarta w dniu ${new Date().toLocaleDateString('pl-PL')} pomiędzy:`);
+    lines.push(`Jakub Czajka, działający w ramach marki Soft Synergy`);
+    lines.push('a');
+    lines.push('[Dane Klienta]');
+    lines.push('zwana dalej „Zamawiającym”');
+    lines.push('');
+    lines.push('§1. Przedmiot umowy');
+    lines.push(`Wykonawca zobowiązuje się do realizacji projektu "${project.name}", zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia ${new Date().toLocaleDateString('pl-PL')}).`);
+    lines.push('');
+    lines.push('§2. Zakres prac');
+    const modules = Array.isArray(project.modules) && project.modules.length ? project.modules : [{ name: 'Zakres', description: 'zgodnie z ofertą' }];
+    modules.forEach((m, i) => lines.push(`${i + 1}. ${m.name}: ${m.description}`));
+    lines.push('');
+    lines.push('§3. Harmonogram i czas realizacji');
+    if (project.timeline?.phase1) lines.push(`- ${project.timeline.phase1.name}: ${project.timeline.phase1.duration}`);
+    if (project.timeline?.phase2) lines.push(`- ${project.timeline.phase2.name}: ${project.timeline.phase2.duration}`);
+    if (project.timeline?.phase3) lines.push(`- ${project.timeline.phase3.name}: ${project.timeline.phase3.duration}`);
+    if (project.timeline?.phase4) lines.push(`- ${project.timeline.phase4.name}: ${project.timeline.phase4.duration}`);
+    lines.push('- Prace rozpoczną się w ciągu 3 dni roboczych od odesłania podpisanej umowy.');
+    lines.push('');
+    lines.push('§4. Wynagrodzenie i płatności');
+    lines.push(`Łączne wynagrodzenie za realizację prac wynosi ${currency(project?.pricing?.total || 0)} netto.`);
+    const paymentLines = (project.customPaymentTerms && project.customPaymentTerms.trim().length)
+      ? project.customPaymentTerms.split(/\n+/)
+      : [
+          `Faza I: ${currency(project?.pricing?.phase1 || 0)}`,
+          `Faza II: ${currency(project?.pricing?.phase2 || 0)}`,
+          `Faza III: ${currency(project?.pricing?.phase3 || 0)}`,
+          `Faza IV: ${currency(project?.pricing?.phase4 || 0)}`
+        ];
+    paymentLines.forEach((l) => lines.push(`- ${l}`));
+    lines.push('');
+    lines.push('§5. Zwrot zaliczki i odstąpienie');
+    lines.push('1. W przypadku niemożliwości realizacji projektu z przyczyn niezależnych od Wykonawcy, Wykonawca może odstąpić od umowy i zobowiązuje się do pełnego zwrotu zaliczki w terminie do 5 dni roboczych.');
+    lines.push('2. W takim przypadku żadna ze stron nie będzie dochodziła dalszych roszczeń.');
+    lines.push('');
+    lines.push('§6. Odbiór i gwarancja');
+    lines.push('1. Zamawiający zobowiązuje się do odbioru prac po zakończeniu realizacji.');
+    lines.push('2. Błędy zgłoszone w okresie 3 miesięcy od odbioru będą poprawiane nieodpłatnie.');
+    lines.push('3. Gwarancja nie obejmuje zmian funkcjonalnych ani rozbudowy.');
+    lines.push('');
+    lines.push('§7. Postanowienia końcowe');
+    lines.push('1. Strony dopuszczają kontakt i ustalenia drogą mailową jako formę wiążącą.');
+    lines.push('2. Spory będą rozstrzygane polubownie, a w razie potrzeby przez sąd właściwy dla miejsca zamieszkania Wykonawcy.');
+    lines.push('3. W sprawach nieuregulowanych stosuje się przepisy Kodeksu cywilnego.');
+
+    res.json({ draft: lines.join('\n') });
+  } catch (error) {
+    console.error('Contract draft error:', error);
+    res.status(500).json({ message: 'Błąd serwera podczas generowania szkicu umowy' });
+  }
+});
