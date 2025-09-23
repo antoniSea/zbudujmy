@@ -104,7 +104,9 @@ const ProjectForm = () => {
     }
   });
 
-  const generateContractMutation = useMutation(offersAPI.generateContract, {
+  const generateContractMutation = useMutation(
+    ({ projectId, customText }) => offersAPI.generateContract(projectId, customText),
+  {
     onSuccess: () => {
       toast.success('Umowa została wygenerowana, status ustawiono na zaakceptowany!');
       queryClient.invalidateQueries(['project', id]);
@@ -1283,14 +1285,7 @@ const ProjectForm = () => {
                   className="btn-primary"
                   onClick={() => {
                     setShowContractEditor(false);
-                    generateContractMutation.mutate(id, { onSuccess: undefined, onError: undefined });
-                    offersAPI.generateContract(id, contractText)
-                      .then(() => {
-                        toast.success('Umowa wygenerowana');
-                        queryClient.invalidateQueries(['project', id]);
-                        queryClient.invalidateQueries('projects');
-                      })
-                      .catch(() => toast.error('Błąd podczas generowania umowy'));
+                    generateContractMutation.mutate({ projectId: id, customText: contractText });
                   }}
                 >
                   Generuj PDF z tej treści
