@@ -341,6 +341,7 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
     const currency = (n) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(n || 0);
     const pdfFileName = `contract-${project._id}-${Date.now()}.pdf`;
     const pdfPath = path.join(outputDir, pdfFileName);
+    const customText = typeof req.body?.customText === 'string' ? req.body.customText.trim() : '';
 
     await new Promise((resolve, reject) => {
       try {

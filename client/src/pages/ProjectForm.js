@@ -113,6 +113,19 @@ const ProjectForm = () => {
     onError: () => toast.error('Błąd podczas generowania umowy')
   });
 
+  const [showContractEditor, setShowContractEditor] = useState(false);
+  const [contractText, setContractText] = useState('');
+
+  const openContractEditor = async () => {
+    try {
+      const { draft } = await offersAPI.getContractDraft(id);
+      setContractText(draft || '');
+      setShowContractEditor(true);
+    } catch (e) {
+      toast.error('Nie udało się pobrać szkicu umowy');
+    }
+  };
+
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [convertData, setConvertData] = useState({
     description: '',
@@ -458,7 +471,7 @@ const ProjectForm = () => {
                   Generuj ofertę
                 </button>
               <button
-                onClick={() => generateContractMutation.mutate(id)}
+                onClick={openContractEditor}
                 disabled={generateContractMutation.isLoading}
                 className="btn-secondary flex items-center"
                 title="Wygeneruj umowę i ustaw status na zaakceptowany"
@@ -1243,6 +1256,45 @@ const ProjectForm = () => {
                     {convertToFinalMutation.isLoading ? 'Przekształcam...' : 'Przekształć w ofertę finalną'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal edycji umowy przed generowaniem */}
+      {showContractEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Edytuj treść umowy</h2>
+                <button onClick={() => setShowContractEditor(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+              </div>
+              <textarea
+                value={contractText}
+                onChange={(e) => setContractText(e.target.value)}
+                rows={20}
+                className="input-field w-full font-mono"
+              />
+              <div className="flex justify-end space-x-3 mt-4">
+                <button className="btn-secondary" onClick={() => setShowContractEditor(false)}>Anuluj</button>
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    setShowContractEditor(false);
+                    generateContractMutation.mutate(id, { onSuccess: undefined, onError: undefined });
+                    offersAPI.generateContract(id, contractText)
+                      .then(() => {
+                        toast.success('Umowa wygenerowana');
+                        queryClient.invalidateQueries(['project', id]);
+                        queryClient.invalidateQueries('projects');
+                      })
+                      .catch(() => toast.error('Błąd podczas generowania umowy'));
+                  }}
+                >
+                  Generuj PDF z tej treści
+                </button>
               </div>
             </div>
           </div>
