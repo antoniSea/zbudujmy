@@ -88,7 +88,7 @@ app.use('*', (req, res) => {
   });
 });
 
-const PORT =  3004;
+const PORT =  3006;
 
 server.listen(PORT, () => {
   console.log(`🚀 Serwer działa na porcie ${PORT}`);
