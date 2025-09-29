@@ -73,12 +73,14 @@ async function importLeads() {
     // Connect to MongoDB
     console.log('🔌 Łączenie z bazą danych...');
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cold-call-manager', {
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 60000,
+      connectTimeoutMS: 60000,
       bufferCommands: false,
       maxPoolSize: 10,
       retryWrites: true,
-      w: 'majority'
+      w: 'majority',
+      socketTimeoutMS: 60000,
+      family: 4 // Use IPv4, skip trying IPv6
     });
     console.log('✅ Połączono z MongoDB');
 
