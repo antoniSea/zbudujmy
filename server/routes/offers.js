@@ -410,7 +410,10 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
 
         // §1
         sectionHeader('§1. Przedmiot umowy');
-        doc.font('Regular').fontSize(11).text(`Wykonawca zobowiązuje się do realizacji projektu "${project.name}" zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia ${new Date().toLocaleDateString('pl-PL')}).`);
+        const offerDate = project.createdAt
+          ? new Date(project.createdAt).toLocaleDateString('pl-PL')
+          : new Date().toLocaleDateString('pl-PL');
+        doc.font('Regular').fontSize(11).text(`Wykonawca zobowiązuje się do realizacji projektu "${project.name}" zgodnie z zakresem opisanym w Załączniku nr 1 (oferta z dnia ${offerDate}).`);
 
         // §2
         sectionHeader('§2. Zakres prac');
@@ -427,7 +430,9 @@ router.post('/generate-contract/:projectId', auth, async (req, res) => {
         if (timelineBullets.length) {
           bulletList(timelineBullets);
         }
-        bulletList(['Prace rozpoczną się w ciągu 3 dni roboczych od odesłania podpisanej umowy.']);
+        doc.moveDown(0.2);
+        doc.font('Regular').fontSize(11).fillColor('#000');
+        doc.text(`* Prace rozpoczną się w ciągu 3 dni roboczych od odesłania podpisanej umowy.`, { indent: 14 });
 
         // §4 – Wynagrodzenie i płatności dynamicznie
         sectionHeader('§4. Wynagrodzenie i płatności');
@@ -584,14 +589,20 @@ router.get('/contract-draft/:projectId', auth, async (req, res) => {
     lines.push('');
     lines.push('§5. Zwrot zaliczki i odstąpienie');
     lines.push('1. W przypadku niemożliwości realizacji projektu z przyczyn niezależnych od Wykonawcy, Wykonawca może odstąpić od umowy i zobowiązuje się do pełnego zwrotu zaliczki w terminie do 5 dni roboczych.');
-    lines.push('2. W takim przypadku żadna ze stron nie będzie dochodziła dalszych roszczeń.');
+    lines.push('2. W przypadku odstąpienia od umowy przez Zamawiającego po rozpoczęciu prac, zaliczka nie podlega zwrotowi i zostaje zatrzymana przez Wykonawcę na poczet już wykonanych prac.');
     lines.push('');
     lines.push('§6. Odbiór i gwarancja');
     lines.push('1. Zamawiający zobowiązuje się do odbioru prac po zakończeniu realizacji.');
     lines.push('2. Błędy zgłoszone w okresie 3 miesięcy od odbioru będą poprawiane nieodpłatnie.');
     lines.push('3. Gwarancja nie obejmuje zmian funkcjonalnych ani rozbudowy.');
     lines.push('');
-    lines.push('§7. Postanowienia końcowe');
+    // Dodajemy nowy paragraf dotyczący spotkań i kary umownej
+    lines.push('§7. Spotkania projektowe i kara umowna');
+    lines.push('1. Strony mogą umawiać się na spotkania dotyczące realizacji projektu w formie zdalnej.');
+    lines.push('2. Ustalenie terminu spotkania następuje za zgodą obu stron, z wyprzedzeniem co najmniej 24 godzin.');
+    lines.push('3. W przypadku nieobecności Zamawiającego na umówionym spotkaniu bez wcześniejszego odwołania (najpóźniej 2 godziny przed spotkaniem), Zamawiający zobowiązuje się do zapłaty kary umownej w wysokości 100,00 zł za każde takie zdarzenie.');
+    lines.push('');
+    lines.push('§8. Postanowienia końcowe');
     lines.push('1. Strony dopuszczają kontakt i ustalenia drogą mailową jako formę wiążącą.');
     lines.push('2. Spory będą rozstrzygane polubownie, a w razie potrzeby przez sąd właściwy dla miejsca zamieszkania Wykonawcy.');
     lines.push('3. W sprawach nieuregulowanych stosuje się przepisy Kodeksu cywilnego.');

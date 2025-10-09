@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
 import Login from './pages/Login';
+import AdminApp from './pages/AdminApp.jsx';
+import EmployeeApp from './pages/EmployeeApp.jsx';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectForm from './pages/ProjectForm';
@@ -24,6 +26,8 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route path="/admin" element={<AdminApp />} />
+      <Route path="/employee" element={<EmployeeApp />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" />} />

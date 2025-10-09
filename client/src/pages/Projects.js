@@ -309,24 +309,41 @@ const Projects = () => {
       {/* Pagination */}
       {data?.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Pokazano {((data.currentPage - 1) * 10) + 1} do {Math.min(data.currentPage * 10, data.total)} z {data.total} wyników
-          </div>
+          {(() => {
+            const currentPage = Number(data.currentPage || 1);
+            const totalPages = Number(data.totalPages || 1);
+            const total = Number(data.total || 0);
+            const start = ((currentPage - 1) * 10) + 1;
+            const end = Math.min(currentPage * 10, total);
+            return (
+              <div className="text-sm text-gray-700">
+                Pokazano {start} do {end} z {total} wyników
+              </div>
+            );
+          })()}
           <div className="flex space-x-2">
-            <button
-              onClick={() => setFilters({ ...filters, page: data.currentPage - 1 })}
-              disabled={data.currentPage === 1}
-              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Poprzednia
-            </button>
-            <button
-              onClick={() => setFilters({ ...filters, page: data.currentPage + 1 })}
-              disabled={data.currentPage === data.totalPages}
-              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Następna
-            </button>
+            {(() => {
+              const currentPage = Number(data.currentPage || 1);
+              const totalPages = Number(data.totalPages || 1);
+              return (
+                <>
+                  <button
+                    onClick={() => setFilters({ ...filters, page: Math.max(1, currentPage - 1) })}
+                    disabled={currentPage <= 1}
+                    className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Poprzednia
+                  </button>
+                  <button
+                    onClick={() => setFilters({ ...filters, page: Math.min(totalPages, currentPage + 1) })}
+                    disabled={currentPage >= totalPages}
+                    className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Następna
+                  </button>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

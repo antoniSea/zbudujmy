@@ -9,6 +9,8 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, search } = req.query;
+    const pageNum = Number.parseInt(page, 10) || 1;
+    const limitNum = Number.parseInt(limit, 10) || 10;
     
     let query = {};
     
@@ -27,16 +29,16 @@ router.get('/', auth, async (req, res) => {
     const projects = await Project.find(query)
       .populate('createdBy', 'firstName lastName email')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum)
       .exec();
 
     const total = await Project.countDocuments(query);
 
     res.json({
       projects,
-      totalPages: Math.ceil(total / limit),
-      currentPage: page,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
       total
     });
   } catch (error) {
