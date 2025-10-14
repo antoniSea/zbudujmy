@@ -147,12 +147,37 @@
             <div id="current-lead-card" class="bg-white rounded-lg shadow-lg p-6 mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-900">Aktualny Lead</h3>
-                    <div id="lead-status" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                        Oczekiwanie na leada
+                <div id="lead-status" class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                    Oczekiwanie na leada
+                </div>
+            </div>
+            
+            <!-- Phone Search Section -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-search mr-2 text-blue-600"></i>Wyszukaj numer telefonu
+                </h3>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <input type="text" id="phone-search" 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Wpisz numer telefonu lub jego część (min. 3 cyfry)...">
                     </div>
+                    <button id="search-phone-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        <i class="fas fa-search mr-2"></i>Szukaj
+                    </button>
                 </div>
                 
-                <div id="lead-info" class="hidden">
+                <!-- Search Results -->
+                <div id="search-results" class="mt-4 hidden">
+                    <h4 class="font-medium text-gray-900 mb-3">Wyniki wyszukiwania:</h4>
+                    <div id="search-results-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div id="lead-info" class="hidden">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h4 class="font-medium text-gray-900 mb-2">Dane kontaktowe</h4>
@@ -228,6 +253,10 @@
                         <button id="next-call-btn" class="bg-softsynergy-blue hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
                             <i class="fas fa-arrow-right mr-1"></i>Następny telefon
                         </button>
+                        
+                        <button id="schedule-call-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                            <i class="fas fa-clock mr-1"></i>Zaplanuj telefon
+                        </button>
                     </div>
                 </div>
                 
@@ -302,6 +331,43 @@
     <!-- Success/Error Messages -->
     <div id="message-container" class="fixed top-4 right-4 z-50"></div>
 
+    <!-- Schedule Call Modal -->
+    <div id="schedule-call-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-clock mr-2 text-green-600"></i>Zaplanuj następny telefon
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="schedule-date" class="block text-sm font-medium text-gray-700 mb-1">Data i godzina</label>
+                            <input type="datetime-local" id="schedule-date" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                        </div>
+                        
+                        <div>
+                            <label for="schedule-notes" class="block text-sm font-medium text-gray-700 mb-1">Notatki (opcjonalne)</label>
+                            <textarea id="schedule-notes" rows="3" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                      placeholder="Dlaczego planujesz telefon na ten czas?"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button id="cancel-schedule-btn" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                            Anuluj
+                        </button>
+                        <button id="confirm-schedule-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-check mr-2"></i>Zaplanuj
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let socket;
@@ -345,6 +411,19 @@
             document.getElementById('not-interested-btn').addEventListener('click', () => endCall('not_interested'));
             document.getElementById('meeting-scheduled-btn').addEventListener('click', showMeetingDetails);
             document.getElementById('next-call-btn').addEventListener('click', getNextLead);
+            document.getElementById('schedule-call-btn').addEventListener('click', showScheduleModal);
+            
+            // Phone search
+            document.getElementById('search-phone-btn').addEventListener('click', searchPhone);
+            document.getElementById('phone-search').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchPhone();
+                }
+            });
+            
+            // Schedule modal
+            document.getElementById('cancel-schedule-btn').addEventListener('click', hideScheduleModal);
+            document.getElementById('confirm-schedule-btn').addEventListener('click', confirmSchedule);
             
             // Availability toggle
             document.getElementById('availability-toggle').addEventListener('click', toggleAvailability);
@@ -515,9 +594,35 @@
             document.getElementById('lead-email').textContent = currentLead.email;
             document.getElementById('lead-notes').textContent = currentLead.notes || 'Brak notatek';
             
-            // Update status
-            document.getElementById('lead-status').textContent = 'Przypisany';
-            document.getElementById('lead-status').className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+            // Check if there's an active call
+            if (currentLead.hasActiveCall) {
+                // Show call in progress state
+                document.getElementById('start-call-btn').classList.add('hidden');
+                document.getElementById('recording-btn').classList.remove('hidden');
+                document.getElementById('end-call-buttons').classList.remove('hidden');
+                document.getElementById('call-notes-section').classList.remove('hidden');
+                
+                // Update status
+                document.getElementById('lead-status').textContent = 'Rozmowa w toku';
+                document.getElementById('lead-status').className = 'px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800';
+                
+                // Set current call info
+                currentCall = { id: currentLead.activeCallId };
+                callStartTime = new Date(); // We don't have exact start time, so use current time
+                startCallTimer();
+                
+                showSuccess('Rozmowa już trwa - kontynuuj');
+            } else {
+                // Show normal state
+                document.getElementById('start-call-btn').classList.remove('hidden');
+                document.getElementById('recording-btn').classList.add('hidden');
+                document.getElementById('end-call-buttons').classList.add('hidden');
+                document.getElementById('call-notes-section').classList.add('hidden');
+                
+                // Update status
+                document.getElementById('lead-status').textContent = 'Przypisany';
+                document.getElementById('lead-status').className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+            }
             
             // Display call history
             displayCallHistory(currentLead.callHistory || []);
@@ -569,7 +674,7 @@
             if (!currentLead) return;
             
             try {
-                const response = await fetch('/api/calls/start', {
+                const response = await fetch('/api/leads/start-call', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -590,6 +695,10 @@
                     document.getElementById('recording-btn').classList.remove('hidden');
                     document.getElementById('end-call-buttons').classList.remove('hidden');
                     document.getElementById('call-notes-section').classList.remove('hidden');
+                    
+                    // Update lead status
+                    document.getElementById('lead-status').textContent = 'Rozmowa w toku';
+                    document.getElementById('lead-status').className = 'px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800';
                     
                     showSuccess('Rozmowa rozpoczęta');
                 } else {
@@ -690,15 +799,15 @@
             }
             
             try {
-                const response = await fetch('/api/calls/end', {
+                const response = await fetch('/api/leads/end-call', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     },
                     body: JSON.stringify({
-                        callId: currentCall ? currentCall.id : undefined,
-                        status: result,
+                        leadId: currentLead.id,
+                        result: result,
                         notes: notes,
                         meetingDetails: meetingDetails,
                         recordingUrl: recordingUrl
@@ -955,6 +1064,191 @@
             setTimeout(() => {
                 messageEl.remove();
             }, 5000);
+        }
+
+        // Phone search functions
+        async function searchPhone() {
+            const phoneInput = document.getElementById('phone-search');
+            const phone = phoneInput.value.trim();
+            
+            if (phone.length < 3) {
+                showError('Wprowadź co najmniej 3 cyfry numeru telefonu');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/leads/search-phone?phone=${encodeURIComponent(phone)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySearchResults(data.leads);
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                console.error('Błąd wyszukiwania:', error);
+                showError('Błąd wyszukiwania numeru');
+            }
+        }
+
+        function displaySearchResults(leads) {
+            const resultsContainer = document.getElementById('search-results');
+            const resultsList = document.getElementById('search-results-list');
+            
+            if (leads.length === 0) {
+                resultsList.innerHTML = '<p class="text-gray-500 text-sm">Nie znaleziono leadów z tym numerem telefonu</p>';
+            } else {
+                resultsList.innerHTML = '';
+                
+                leads.forEach(lead => {
+                    const leadElement = document.createElement('div');
+                    leadElement.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer';
+                    
+                    const statusColors = {
+                        'new': 'bg-blue-100 text-blue-800',
+                        'assigned': 'bg-yellow-100 text-yellow-800',
+                        'calling': 'bg-orange-100 text-orange-800',
+                        'no_answer': 'bg-red-100 text-red-800',
+                        'not_interested': 'bg-gray-100 text-gray-800',
+                        'meeting_scheduled': 'bg-purple-100 text-purple-800',
+                        'completed': 'bg-green-100 text-green-800'
+                    };
+                    
+                    leadElement.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">${lead.name}</div>
+                                <div class="text-sm text-gray-600">${lead.phone}</div>
+                                <div class="text-sm text-gray-600">${lead.email}</div>
+                                ${lead.assignedTo ? `<div class="text-xs text-gray-500">Przypisany do: ${lead.assignedTo.name}</div>` : ''}
+                            </div>
+                            <div class="flex flex-col items-end space-y-2">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColors[lead.status] || 'bg-gray-100 text-gray-800'}">
+                                    ${getStatusText(lead.status)}
+                                </span>
+                                <button onclick="selectLeadFromSearch('${lead.id}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                    <i class="fas fa-phone mr-1"></i>Zadzwoń
+                                </button>
+                            </div>
+                        </div>
+                        ${lead.nextCallTime ? `<div class="text-xs text-gray-500 mt-2">Następny telefon: ${new Date(lead.nextCallTime).toLocaleString()}</div>` : ''}
+                    `;
+                    
+                    resultsList.appendChild(leadElement);
+                });
+            }
+            
+            resultsContainer.classList.remove('hidden');
+        }
+
+        function getStatusText(status) {
+            const statusTexts = {
+                'new': 'Nowy',
+                'assigned': 'Przypisany',
+                'calling': 'W trakcie rozmowy',
+                'no_answer': 'Nie odebrał',
+                'not_interested': 'Niezainteresowany',
+                'meeting_scheduled': 'Umówione spotkanie',
+                'completed': 'Zakończony'
+            };
+            return statusTexts[status] || status;
+        }
+
+        async function selectLeadFromSearch(leadId) {
+            try {
+                // Set this lead as current lead
+                const response = await fetch('/api/leads/my-lead', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.lead && data.lead.id === leadId) {
+                    currentLead = data.lead;
+                    displayCurrentLead();
+                    showSuccess('Lead wybrany - możesz rozpocząć rozmowę');
+                } else {
+                    showError('Nie można wybrać tego leada - może być przypisany do innego pracownika');
+                }
+            } catch (error) {
+                console.error('Błąd wyboru leada:', error);
+                showError('Błąd wyboru leada');
+            }
+        }
+
+        // Schedule call functions
+        function showScheduleModal() {
+            if (!currentLead) {
+                showError('Brak aktywnego leada');
+                return;
+            }
+            
+            // Set default time to 1 hour from now
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            const defaultTime = now.toISOString().slice(0, 16);
+            
+            document.getElementById('schedule-date').value = defaultTime;
+            document.getElementById('schedule-notes').value = '';
+            
+            document.getElementById('schedule-call-modal').classList.remove('hidden');
+        }
+
+        function hideScheduleModal() {
+            document.getElementById('schedule-call-modal').classList.add('hidden');
+        }
+
+        async function confirmSchedule() {
+            const scheduledDateTime = document.getElementById('schedule-date').value;
+            const notes = document.getElementById('schedule-notes').value;
+            
+            if (!scheduledDateTime) {
+                showError('Wybierz datę i godzinę');
+                return;
+            }
+            
+            if (new Date(scheduledDateTime) <= new Date()) {
+                showError('Data musi być w przyszłości');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/leads/schedule-call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        leadId: currentLead.id,
+                        scheduledDateTime: scheduledDateTime,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    hideScheduleModal();
+                    showSuccess(`Telefon zaplanowany na ${new Date(scheduledDateTime).toLocaleString()}`);
+                    
+                    // Refresh current lead to show updated info
+                    await getCurrentLead();
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                console.error('Błąd planowania telefonu:', error);
+                showError('Błąd planowania telefonu');
+            }
         }
     </script>
 </body>
