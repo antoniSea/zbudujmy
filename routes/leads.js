@@ -108,12 +108,14 @@ router.post('/start-call', authenticateToken, async (req, res) => {
     lead.lastCallAttempt = new Date();
     await lead.save();
 
-    // Emituj event do frontendu
-    req.io.to(`employee-${req.user.id}`).emit('call-started', {
+    // Emituj event do frontendu (zabezpieczenie gdy brak io)
+    if (req.io && typeof req.io.to === 'function') {
+      req.io.to(`employee-${req.user.id}`).emit('call-started', {
       leadId: lead._id,
       callId: call._id,
       timestamp: new Date()
-    });
+      });
+    }
 
     res.json({
       success: true,
@@ -215,13 +217,15 @@ router.post('/end-call', authenticateToken, async (req, res) => {
     // Zwolnij pracownika i zaktualizuj status leada
     const result_data = await LeadDistributionService.releaseEmployee(req.user.id, leadId, result);
 
-    // Emituj event do frontendu
-    req.io.to(`employee-${req.user.id}`).emit('call-ended', {
+    // Emituj event do frontendu (zabezpieczenie gdy brak io)
+    if (req.io && typeof req.io.to === 'function') {
+      req.io.to(`employee-${req.user.id}`).emit('call-ended', {
       leadId: lead._id,
       callId: activeCall._id,
       result: result,
       timestamp: new Date()
-    });
+      });
+    }
 
     res.json({
       success: true,

@@ -26,6 +26,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Przekaż io do routes (musi być PRZED rejestracją tras)
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Statyczne pliki
 app.use(express.static('public'));
 
@@ -601,11 +607,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Przekaż io do routes
-app.use((req, res, next) => {
-  req.io = io;
-  next();
-});
+// (pozostawione bez zmian) dodatkowy middleware nie jest już potrzebny, ale nie szkodzi
 
 // Połączenie z MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cold-call-manager', {
